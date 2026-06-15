@@ -101,11 +101,12 @@ export function LoginForm() {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <p className={styles.eyebrow}>College AI Helpdesk</p>
-        <h1>{mode === "login" ? "Login to continue" : "Create student account"}</h1>
+        <p className={styles.eyebrow}>Secure portal</p>
+        <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
         <p>
-          Secure login is required to access student chat and admin knowledge
-          base features.
+          {mode === "login"
+            ? "Use your registered email to continue to the student helpdesk."
+            : "Register with your college details to access the student helpdesk."}
         </p>
       </div>
 
@@ -115,14 +116,14 @@ export function LoginForm() {
           className={mode === "login" ? styles.activeSwitch : ""}
           onClick={() => setMode("login")}
         >
-          Login
+          Sign in
         </button>
         <button
           type="button"
           className={mode === "signup" ? styles.activeSwitch : ""}
           onClick={() => setMode("signup")}
         >
-          Signup
+          Create account
         </button>
       </div>
 
@@ -144,7 +145,7 @@ export function LoginForm() {
           <input
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="student@example.com"
+            placeholder="name@college.edu"
             type="email"
             autoComplete="email"
           />
@@ -168,7 +169,7 @@ export function LoginForm() {
           {isSubmitting
             ? "Please wait..."
             : mode === "login"
-              ? "Login"
+              ? "Sign in to helpdesk"
               : "Create account"}
         </button>
       </form>

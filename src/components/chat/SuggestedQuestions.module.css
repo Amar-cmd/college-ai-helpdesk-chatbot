@@ -1,22 +1,56 @@
 .wrapper {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  margin-top: 36px;
 }
 
 .wrapper button {
-  min-height: 36px;
-  padding: 0 14px;
+  display: flex;
+  min-height: 76px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 18px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.86);
   color: var(--color-text);
-  font-size: 14px;
-  font-weight: 700;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.wrapper button::after {
+  color: var(--color-accent);
+  content: "->";
+  font-size: 17px;
+  line-height: 1;
 }
 
 .wrapper button:hover {
   border-color: var(--color-primary);
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 760px) {
+  .wrapper {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    grid-template-columns: 1fr;
+    margin-top: 28px;
+  }
+
+  .wrapper button {
+    min-height: 58px;
+    align-items: center;
+  }
 }

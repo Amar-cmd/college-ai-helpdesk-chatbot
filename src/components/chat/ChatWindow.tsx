@@ -1,6 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
+import { SignOutButton } from "@/components/auth/SignOutButton";
+import { BrandMark } from "@/components/common/BrandMark";
+import { ROUTES } from "@/lib/routes";
 import type { ChatMessageItem } from "@/types/chat";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatInput } from "./ChatInput";
@@ -125,15 +129,31 @@ export function ChatWindow({
   return (
     <div className={styles.chatShell}>
       <header className={styles.chatHeader}>
-        <div>
-          <p className={styles.eyebrow}>College AI Helpdesk</p>
-          <h1>Student Support Chat</h1>
-          <p className={styles.metaText}>
-            Signed in as {userEmail} · Role: {userRole}
-          </p>
+        <BrandMark />
+
+        <div className={styles.headerContext}>
+          <span className={styles.contextLabel}>Current workspace</span>
+          <strong>Student support</strong>
         </div>
 
-        <ProviderStatus status={isLoading ? "thinking" : "ready"} />
+        <div className={styles.headerActions}>
+          <ProviderStatus status={isLoading ? "thinking" : "ready"} />
+          {userRole === "admin" ? (
+            <Link className={styles.adminLink} href={ROUTES.adminKnowledge}>
+              Admin
+            </Link>
+          ) : null}
+          <div className={styles.account}>
+            <span className={styles.avatar} aria-hidden="true">
+              {userEmail.charAt(0).toUpperCase()}
+            </span>
+            <span className={styles.accountCopy}>
+              <strong>{userEmail}</strong>
+              <small>{userRole}</small>
+            </span>
+          </div>
+          <SignOutButton compact />
+        </div>
       </header>
 
       {errorMessage ? (
@@ -153,7 +173,10 @@ export function ChatWindow({
 
             {isLoading ? (
               <div className={styles.typingIndicator} aria-live="polite">
-                College AI Helpdesk is typing...
+                <span />
+                <span />
+                <span />
+                <em>Checking college information</em>
               </div>
             ) : null}
           </div>

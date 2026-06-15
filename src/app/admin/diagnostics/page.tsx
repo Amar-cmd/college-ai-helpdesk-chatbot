@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { AdminDiagnostics } from "@/components/admin/AdminDiagnostics";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { PageHeader } from "@/components/common/PageHeader";
 import { requireAdmin } from "@/lib/auth/requireRole";
 import { getRecentProviderLogs } from "@/lib/db/providerLogs";
 import { getRecentRateLimitLogs } from "@/lib/db/rateLimitLogs";
 import { ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
+import styles from "../AdminPage.module.css";
 
 export default async function AdminDiagnosticsPage() {
   const { profile } = await requireAdmin();
@@ -17,48 +19,22 @@ export default async function AdminDiagnosticsPage() {
   ]);
 
   return (
-    <section className="page-section">
+    <section className={styles.page}>
       <div className="container">
-        <div style={{ display: "grid", gap: "24px" }}>
-          <div className="card" style={{ padding: "28px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "16px",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <p
-                  style={{
-                    margin: "0 0 8px",
-                    color: "var(--color-primary)",
-                    fontWeight: 800,
-                  }}
-                >
-                  Admin Area
-                </p>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontSize: "30px",
-                    letterSpacing: "-0.03em",
-                  }}
-                >
-                  Diagnostics
-                </h1>
-                <p className="text-muted" style={{ margin: "8px 0 0" }}>
-                  Signed in as {profile.email}
-                </p>
-              </div>
-
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+        <div className={styles.stack}>
+          <PageHeader
+            eyebrow="Admin Area"
+            title="Diagnostics"
+            description="Review recent provider activity, fallback behavior, and rate-limit events."
+            meta={`Signed in as ${profile.email}`}
+            actions={
+              <>
+                <Link href={ROUTES.chat}>Student Chat</Link>
                 <Link href={ROUTES.adminKnowledge}>Knowledge Base</Link>
                 <SignOutButton />
-              </div>
-            </div>
-          </div>
+              </>
+            }
+          />
 
           {!providerLogsResult.ok || !rateLimitLogsResult.ok ? (
             <div className="card" style={{ padding: "24px" }}>

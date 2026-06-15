@@ -5,4 +5,5 @@ export type ChatMessageItem = {
   role: ChatMessageRole;
   content: string;
   createdAt: string;
+  providerUsed?: string | null;
 };

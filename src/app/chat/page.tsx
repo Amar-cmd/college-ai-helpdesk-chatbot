@@ -4,6 +4,7 @@ import { getOrCreateDefaultChatSession } from "@/lib/db/chatSessions";
 import { requireUser } from "@/lib/auth/requireRole";
 import { ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
+import styles from "./ChatPage.module.css";
 
 export default async function ChatPage() {
   const { profile } = await requireUser(ROUTES.chat);
@@ -13,8 +14,8 @@ export default async function ChatPage() {
 
   if (!sessionResult.ok) {
     return (
-      <section className="page-section">
-        <div className="container">
+      <section className={styles.chatPage}>
+        <div className={styles.chatContainer}>
           <div className="card" style={{ padding: "24px" }}>
             <h1 style={{ marginTop: 0 }}>Chat is temporarily unavailable</h1>
             <p className="text-muted" style={{ marginBottom: 0 }}>
@@ -34,8 +35,8 @@ export default async function ChatPage() {
   );
 
   return (
-    <section className="page-section">
-      <div className="container">
+    <section className={styles.chatPage}>
+      <div className={styles.chatContainer}>
         <ChatWindow
           userEmail={profile.email}
           userRole={profile.role}

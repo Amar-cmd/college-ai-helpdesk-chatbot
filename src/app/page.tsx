@@ -1,98 +1,68 @@
 import Link from "next/link";
-import { APP_CONFIG } from "@/config/app";
+import { BrandMark } from "@/components/common/BrandMark";
 import { ROUTES } from "@/lib/routes";
+import styles from "./HomePage.module.css";
 
 export default function HomePage() {
   return (
-    <section className="page-section">
-      <div className="container">
-        <div
-          className="card"
-          style={{
-            padding: "40px",
-            maxWidth: "760px",
-            margin: "0 auto",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 12px",
-              color: "var(--color-primary)",
-              fontWeight: 700,
-            }}
-          >
-            {APP_CONFIG.collegeName}
+    <div className={styles.page}>
+      <nav className={styles.nav} aria-label="Primary navigation">
+        <BrandMark />
+        <div className={styles.navActions}>
+          <Link href={ROUTES.chat} className={styles.textLink}>
+            Open helpdesk
+          </Link>
+          <Link href={ROUTES.login} className={styles.primaryLink}>
+            Student login
+          </Link>
+        </div>
+      </nav>
+
+      <main className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>Official student support</p>
+          <h1>College questions, answered clearly.</h1>
+          <p className={styles.heroDescription}>
+            A direct line to verified information about academics, exams,
+            library services, fees, placements, and campus systems.
           </p>
 
-          <h1
-            style={{
-              margin: "0 0 16px",
-              fontSize: "clamp(32px, 6vw, 56px)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.04em",
-            }}
-          >
-            {APP_CONFIG.name}
-          </h1>
-
-          <p
-            className="text-muted"
-            style={{
-              margin: "0 0 28px",
-              fontSize: "18px",
-              lineHeight: 1.7,
-            }}
-          >
-            A clean, college-specific AI helpdesk chatbot for student support,
-            academic FAQs, LMS help, notices, and admin-managed knowledge base.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            <Link
-              href={ROUTES.login}
-              className="focus-ring"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: "44px",
-                padding: "0 18px",
-                borderRadius: "var(--radius-md)",
-                background: "var(--color-primary)",
-                color: "#ffffff",
-                fontWeight: 700,
-              }}
-            >
-              Go to Login
+          <div className={styles.heroActions}>
+            <Link href={ROUTES.login} className={styles.heroPrimary}>
+              Start a conversation
             </Link>
-
-            <Link
-              href={ROUTES.chat}
-              className="focus-ring"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: "44px",
-                padding: "0 18px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--color-border)",
-                background: "var(--color-surface)",
-                color: "var(--color-text)",
-                fontWeight: 700,
-              }}
-            >
-              Preview Chat
+            <Link href={ROUTES.chat} className={styles.heroSecondary}>
+              Preview the helpdesk
             </Link>
           </div>
+
+          <p className={styles.trustLine}>
+            <span>College-managed knowledge</span>
+            <span>Available around the clock</span>
+            <span>Clear source context</span>
+          </p>
         </div>
-      </div>
-    </section>
+
+        <aside className={styles.preview} aria-label="Helpdesk preview">
+          <div className={styles.previewHeader}>
+            <BrandMark compact inverse />
+            <span>Student assistant</span>
+          </div>
+          <div className={styles.previewBody}>
+            <h2>What do you need help with today?</h2>
+            <p>Ask in your own words. Start with one of these common topics.</p>
+            <div className={styles.questionList}>
+              <span>Attendance requirements</span>
+              <span>Exam form process</span>
+              <span>Library and LMS access</span>
+            </div>
+            <div className={styles.previewFooter}>
+              Responses are grounded in information maintained by the college
+              administration.
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
   );
 }

@@ -1,3 +1,4 @@
+import { BookOpenIcon } from "@/components/common/Icons";
 import { SuggestedQuestions } from "./SuggestedQuestions";
 import styles from "./ChatEmptyState.module.css";
 
@@ -9,14 +10,14 @@ export function ChatEmptyState({ onSelectQuestion }: ChatEmptyStateProps) {
   return (
     <div className={styles.emptyState}>
       <div className={styles.icon} aria-hidden="true">
-        AI
+        <BookOpenIcon size={28} />
       </div>
 
-      <h2>How can the college helpdesk assist you?</h2>
+      <h2>What can we help you understand?</h2>
 
       <p>
-        Ask a question about academic rules, exams, library access, LMS support,
-        fee payment, or placement assistance.
+        Ask about academics, exams, library access, the LMS, fees, or
+        placements. Answers use information maintained by the college.
       </p>
 
       <SuggestedQuestions onSelectQuestion={onSelectQuestion} />

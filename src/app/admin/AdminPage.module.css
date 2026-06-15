@@ -1,0 +1,20 @@
+.page {
+  min-height: 100dvh;
+  padding: 28px 0 64px;
+  background:
+    linear-gradient(rgba(23, 59, 88, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 59, 88, 0.025) 1px, transparent 1px),
+    var(--color-canvas);
+  background-size: 36px 36px;
+}
+
+.stack {
+  display: grid;
+  gap: 22px;
+}
+
+@media (max-width: 680px) {
+  .page {
+    padding-top: 16px;
+  }
+}

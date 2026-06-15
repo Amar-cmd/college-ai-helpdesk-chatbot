@@ -22,18 +22,19 @@ export function mapChatMessageToItem(message: ChatMessage): ChatMessageItem {
     role: message.role,
     content: message.content,
     createdAt: message.created_at,
+    providerUsed: message.provider_used,
   };
 }
 
 export async function getSessionMessages(
   supabase: SupabaseClient<Database>,
   sessionId: string,
-  userId: string
+  userId: string,
 ): Promise<DbResult<ChatMessageItem[]>> {
   const { data, error } = await supabase
     .from("chat_messages")
     .select(
-      "id, session_id, user_id, role, content, provider_used, created_at, updated_at"
+      "id, session_id, user_id, role, content, provider_used, created_at, updated_at",
     )
     .eq("session_id", sessionId)
     .eq("user_id", userId)
@@ -54,13 +55,13 @@ export async function getSessionMessages(
 
 export async function saveChatMessage(
   supabase: SupabaseClient<Database>,
-  message: ChatMessageInsert
+  message: ChatMessageInsert,
 ): Promise<DbResult<ChatMessageItem>> {
   const { data, error } = await supabase
     .from("chat_messages")
     .insert(message)
     .select(
-      "id, session_id, user_id, role, content, provider_used, created_at, updated_at"
+      "id, session_id, user_id, role, content, provider_used, created_at, updated_at",
     )
     .single();
 
@@ -80,7 +81,7 @@ export async function saveChatMessage(
 export async function countUserMessagesSince(
   supabase: SupabaseClient<Database>,
   userId: string,
-  since: Date
+  since: Date,
 ): Promise<DbResult<number>> {
   const { count, error } = await supabase
     .from("chat_messages")

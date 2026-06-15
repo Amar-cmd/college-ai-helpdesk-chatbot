@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export function SignOutButton() {
+type SignOutButtonProps = {
+  compact?: boolean;
+};
+
+export function SignOutButton({ compact = false }: SignOutButtonProps) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -18,17 +22,19 @@ export function SignOutButton() {
     <button
       type="button"
       onClick={handleSignOut}
+      aria-label="Sign out"
       style={{
         minHeight: "40px",
-        padding: "0 14px",
+        padding: compact ? "0 12px" : "0 14px",
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--color-border)",
         background: "var(--color-surface)",
         color: "var(--color-text)",
-        fontWeight: 700,
+        fontSize: "13px",
+        fontWeight: 750,
       }}
     >
-      Sign out
+      {compact ? "Exit" : "Sign out"}
     </button>
   );
 }

@@ -1,84 +1,112 @@
 .inputShell {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: end;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.88);
-  border-top: 1px solid var(--color-border);
-}
-
-.textareaWrap {
+  position: relative;
+  z-index: 5;
   display: grid;
   gap: 8px;
+  padding: 14px max(20px, calc((100vw - 1180px) / 2)) 16px;
+  border-top: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 -12px 36px rgba(20, 35, 31, 0.05);
+  backdrop-filter: blur(18px);
 }
 
-.textareaWrap textarea {
+.inputRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 7px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  box-shadow: 0 8px 26px rgba(20, 35, 31, 0.06);
+}
+
+.inputRow:focus-within {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 0 0 3px rgba(23, 59, 88, 0.1),
+    0 8px 26px rgba(20, 35, 31, 0.06);
+}
+
+.inputRow textarea {
   width: 100%;
-  min-height: 48px;
+  min-height: 44px;
   max-height: 140px;
   resize: vertical;
-  padding: 13px 15px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  padding: 11px 12px;
+  border: 0;
+  outline: 0;
+  background: transparent;
   color: var(--color-text);
   line-height: 1.5;
 }
 
-.textareaWrap textarea:focus {
-  outline: 3px solid rgba(31, 79, 143, 0.18);
-  border-color: var(--color-primary);
+.inputRow textarea:disabled {
+  background: var(--color-surface-muted);
 }
 
-.textareaWrap textarea:disabled {
-  background: var(--color-surface-muted);
+.sendButton {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--color-primary);
+  color: var(--color-text-light);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: var(--color-primary-dark);
 }
 
 .helperRow {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: var(--color-text-muted);
-  font-size: 12px;
+  padding: 0 2px;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: 650;
   line-height: 1.4;
 }
 
-.characterCount {
+.characterCount,
+.characterWarning {
   white-space: nowrap;
 }
 
 .characterWarning {
   color: var(--color-warning);
-  white-space: nowrap;
-  font-weight: 700;
-}
-
-.inputShell button {
-  min-height: 48px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: var(--radius-lg);
-  background: var(--color-primary);
-  color: #ffffff;
   font-weight: 800;
 }
 
-.inputShell button:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-}
-
-@media (max-width: 720px) {
+@media (max-width: 680px) {
   .inputShell {
-    grid-template-columns: 1fr;
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .inputRow {
+    gap: 6px;
+  }
+
+  .sendButton {
+    width: 44px;
+    padding: 0;
+  }
+
+  .sendButton span {
+    display: none;
+  }
+
+  .helperRow span:first-child {
+    display: none;
   }
 
   .helperRow {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .inputShell button {
-    width: 100%;
+    justify-content: flex-end;
   }
 }

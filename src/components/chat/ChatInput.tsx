@@ -1,4 +1,5 @@
 import { FormEvent, KeyboardEvent, useState } from "react";
+import { SendIcon } from "@/components/common/Icons";
 import styles from "./ChatInput.module.css";
 
 type ChatInputProps = {
@@ -30,43 +31,47 @@ export function ChatInput({ isLoading, onSendMessage }: ChatInputProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-
-      const form = event.currentTarget.form;
-      form?.requestSubmit();
+      event.currentTarget.form?.requestSubmit();
     }
   }
 
   return (
     <form className={styles.inputShell} onSubmit={handleSubmit}>
-      <div className={styles.textareaWrap}>
+      <div className={styles.inputRow}>
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about attendance, exams, library, fees, LMS, or placement support."
+          placeholder="Ask a college helpdesk question."
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           disabled={isLoading}
           aria-label="Ask a question"
         />
 
-        <div className={styles.helperRow}>
-          <span>Press Enter to send. Use Shift + Enter for a new line.</span>
-          <span
-            className={
-              remainingCharacters <= 80
-                ? styles.characterWarning
-                : styles.characterCount
-            }
-          >
-            {remainingCharacters} characters left
-          </span>
-        </div>
+        <button
+          className={styles.sendButton}
+          type="submit"
+          disabled={isSubmitDisabled}
+          aria-label="Send message"
+        >
+          <SendIcon />
+          <span>{isLoading ? "Sending" : "Send"}</span>
+        </button>
       </div>
 
-      <button type="submit" disabled={isSubmitDisabled}>
-        {isLoading ? "Sending..." : "Send"}
-      </button>
+      <div className={styles.helperRow}>
+        <span>Enter to send · Shift + Enter for a new line</span>
+        <span
+          className={
+            remainingCharacters <= 80
+              ? styles.characterWarning
+              : styles.characterCount
+          }
+        >
+          {remainingCharacters} left
+        </span>
+      </div>
     </form>
   );
 }

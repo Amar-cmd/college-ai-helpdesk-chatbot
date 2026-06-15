@@ -1,3 +1,4 @@
+import { ActivityIcon } from "@/components/common/Icons";
 import styles from "./ProviderStatus.module.css";
 
 type ProviderStatusProps = {
@@ -8,11 +9,12 @@ export function ProviderStatus({ status }: ProviderStatusProps) {
   const isThinking = status === "thinking";
 
   return (
-    <div className={styles.status} aria-live="polite">
-      <span
-        className={`${styles.dot} ${isThinking ? styles.busyDot : styles.readyDot}`}
-      />
-      <span>{isThinking ? "Assistant is generating a response" : "AI assistant is ready"}</span>
+    <div
+      className={`${styles.status} ${isThinking ? styles.thinking : ""}`}
+      aria-live="polite"
+    >
+      <ActivityIcon size={16} />
+      <span>{isThinking ? "Generating response" : "Ready"}</span>
     </div>
   );
 }

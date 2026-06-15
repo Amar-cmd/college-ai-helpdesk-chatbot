@@ -1,27 +1,35 @@
 .status {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
   min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--color-border);
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid #cfe1d9;
   border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 700;
+  background: #f4f8f6;
+  color: var(--color-success);
+  font-size: 11px;
+  font-weight: 800;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
+.status svg {
+  color: currentColor;
 }
 
-.readyDot {
-  background: var(--color-success);
+.thinking {
+  border-color: #eadab7;
+  background: #fbf6e9;
+  color: var(--color-warning);
 }
 
-.busyDot {
-  background: var(--color-warning);
+@media (max-width: 520px) {
+  .status {
+    width: 34px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .status span {
+    display: none;
+  }
 }
