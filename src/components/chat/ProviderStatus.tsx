@@ -12,7 +12,7 @@ export function ProviderStatus({ status }: ProviderStatusProps) {
       <span
         className={`${styles.dot} ${isThinking ? styles.busyDot : styles.readyDot}`}
       />
-      <span>{isThinking ? "Assistant is preparing a response" : "Chat UI is ready"}</span>
+      <span>{isThinking ? "Assistant is generating a response" : "AI assistant is ready"}</span>
     </div>
   );
 }

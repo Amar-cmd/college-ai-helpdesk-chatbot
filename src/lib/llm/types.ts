@@ -1,0 +1,29 @@
+export type LLMErrorType =
+  | "rate_limit"
+  | "timeout"
+  | "auth_error"
+  | "server_error"
+  | "unknown_error"
+  | "disabled"
+  | "missing_api_key";
+
+export type LLMGenerateInput = {
+  prompt: string;
+};
+
+export type LLMResult =
+  | {
+      success: true;
+      text: string;
+      providerName: string;
+      modelName: string;
+      latencyMs: number;
+    }
+  | {
+      success: false;
+      errorType: LLMErrorType;
+      errorMessage: string;
+      providerName: string;
+      modelName: string;
+      latencyMs: number;
+    };

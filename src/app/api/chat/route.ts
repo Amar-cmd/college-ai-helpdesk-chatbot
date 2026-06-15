@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
+import { STATIC_FALLBACK_ANSWER } from "@/lib/llm/fallback";
+import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
+import { generateWithGemini } from "@/lib/llm/providers/gemini";
 import { getOwnedChatSessionById } from "@/lib/db/chatSessions";
 import { saveChatMessage } from "@/lib/db/chatMessages";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
-
-function createMockAssistantResponse(userMessage: string) {
-  return `This is a test response from College AI Helpdesk.
-
-Your question was: "${userMessage}"
-
-This response has been saved to your chat history. In the next steps, this mock response will be replaced by the controlled LLM provider flow.`;
-}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -111,12 +106,25 @@ export async function POST(request: Request) {
     );
   }
 
+  const prompt = buildCollegeHelpdeskPrompt({
+    question: validatedMessage.value,
+    collegeContext: "",
+  });
+
+  const geminiResult = await generateWithGemini({
+    prompt,
+  });
+
+  const assistantText = geminiResult.success
+    ? geminiResult.text
+    : STATIC_FALLBACK_ANSWER;
+
   const assistantMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
     user_id: user.id,
     role: "assistant",
-    content: createMockAssistantResponse(validatedMessage.value),
-    provider_used: "mock",
+    content: assistantText,
+    provider_used: geminiResult.success ? "gemini" : "fallback",
   });
 
   if (!assistantMessageResult.ok) {
@@ -134,5 +142,6 @@ export async function POST(request: Request) {
     sessionId: sessionResult.data.id,
     userMessage: userMessageResult.data,
     assistantMessage: assistantMessageResult.data,
+    provider: geminiResult.success ? geminiResult.providerName : "fallback",
   });
 }
