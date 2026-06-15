@@ -27,3 +27,19 @@ export type LLMResult =
       modelName: string;
       latencyMs: number;
     };
+
+export type LLMProvider = {
+  name: string;
+  modelName: string;
+  enabled: boolean;
+  generate: (input: LLMGenerateInput) => Promise<LLMResult>;
+};
+
+export type LLMRouterResult = {
+  success: boolean;
+  text: string;
+  providerUsed: string;
+  modelUsed: string | null;
+  latencyMs: number;
+  attempts: LLMResult[];
+};

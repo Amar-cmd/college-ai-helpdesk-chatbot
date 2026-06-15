@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { STATIC_FALLBACK_ANSWER } from "@/lib/llm/fallback";
 import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
-import { generateWithGemini } from "@/lib/llm/providers/gemini";
+import { generateWithRouter } from "@/lib/llm/router";
 import { getOwnedChatSessionById } from "@/lib/db/chatSessions";
 import { saveChatMessage } from "@/lib/db/chatMessages";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
@@ -111,20 +110,16 @@ export async function POST(request: Request) {
     collegeContext: "",
   });
 
-  const geminiResult = await generateWithGemini({
+  const llmResult = await generateWithRouter({
     prompt,
   });
-
-  const assistantText = geminiResult.success
-    ? geminiResult.text
-    : STATIC_FALLBACK_ANSWER;
 
   const assistantMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
     user_id: user.id,
     role: "assistant",
-    content: assistantText,
-    provider_used: geminiResult.success ? "gemini" : "fallback",
+    content: llmResult.text,
+    provider_used: llmResult.providerUsed,
   });
 
   if (!assistantMessageResult.ok) {
@@ -142,6 +137,6 @@ export async function POST(request: Request) {
     sessionId: sessionResult.data.id,
     userMessage: userMessageResult.data,
     assistantMessage: assistantMessageResult.data,
-    provider: geminiResult.success ? geminiResult.providerName : "fallback",
+    provider: llmResult.providerUsed,
   });
 }

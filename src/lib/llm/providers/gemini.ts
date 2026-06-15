@@ -3,6 +3,7 @@ import { LLM_PROVIDER_CONFIG } from "@/config/llm-providers";
 import type {
   LLMErrorType,
   LLMGenerateInput,
+  LLMProvider,
   LLMResult,
 } from "@/lib/llm/types";
 import { sanitizeAssistantOutput } from "@/lib/safety/sanitizeOutput";
@@ -121,8 +122,7 @@ export async function generateWithGemini({
       return {
         success: false,
         errorType: getGeminiErrorType(response.status),
-        errorMessage:
-          responseBody.error?.message || "Gemini request failed.",
+        errorMessage: responseBody.error?.message || "Gemini request failed.",
         providerName,
         modelName,
         latencyMs: Date.now() - startedAt,
@@ -139,8 +139,7 @@ export async function generateWithGemini({
       latencyMs: Date.now() - startedAt,
     };
   } catch (error) {
-    const isTimeout =
-      error instanceof Error && error.name === "AbortError";
+    const isTimeout = error instanceof Error && error.name === "AbortError";
 
     return {
       success: false,
@@ -156,3 +155,10 @@ export async function generateWithGemini({
     clearTimeout(timeout);
   }
 }
+
+export const geminiProvider: LLMProvider = {
+  name: LLM_PROVIDER_CONFIG.gemini.name,
+  modelName: LLM_PROVIDER_CONFIG.gemini.model,
+  enabled: LLM_PROVIDER_CONFIG.gemini.enabled,
+  generate: generateWithGemini,
+};
