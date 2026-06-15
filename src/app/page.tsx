@@ -1,66 +1,98 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import { APP_CONFIG } from "@/config/app";
+import { ROUTES } from "@/lib/routes";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <section className="page-section">
+      <div className="container">
+        <div
+          className="card"
+          style={{
+            padding: "40px",
+            maxWidth: "760px",
+            margin: "0 auto",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 12px",
+              color: "var(--color-primary)",
+              fontWeight: 700,
+            }}
+          >
+            {APP_CONFIG.collegeName}
           </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          <h1
+            style={{
+              margin: "0 0 16px",
+              fontSize: "clamp(32px, 6vw, 56px)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.04em",
+            }}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {APP_CONFIG.name}
+          </h1>
+
+          <p
+            className="text-muted"
+            style={{
+              margin: "0 0 28px",
+              fontSize: "18px",
+              lineHeight: 1.7,
+            }}
           >
-            Documentation
-          </a>
+            A clean, college-specific AI helpdesk chatbot for student support,
+            academic FAQs, LMS help, notices, and admin-managed knowledge base.
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <Link
+              href={ROUTES.login}
+              className="focus-ring"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "44px",
+                padding: "0 18px",
+                borderRadius: "var(--radius-md)",
+                background: "var(--color-primary)",
+                color: "#ffffff",
+                fontWeight: 700,
+              }}
+            >
+              Go to Login
+            </Link>
+
+            <Link
+              href={ROUTES.chat}
+              className="focus-ring"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "44px",
+                padding: "0 18px",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface)",
+                color: "var(--color-text)",
+                fontWeight: 700,
+              }}
+            >
+              Preview Chat
+            </Link>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
