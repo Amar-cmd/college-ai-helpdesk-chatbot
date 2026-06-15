@@ -1,6 +1,15 @@
 export type UserRole = "student" | "admin";
 export type ChatMessageRole = "user" | "assistant" | "system";
 
+export type LLMProviderLogStatus =
+  | "success"
+  | "failed"
+  | "rate_limited"
+  | "timeout"
+  | "auth_error"
+  | "server_error"
+  | "unknown_error";
+
 export type Profile = {
   id: string;
   email: string;
@@ -75,6 +84,37 @@ export type ChatMessageUpdate = {
   updated_at?: string;
 };
 
+export type LLMProviderLog = {
+  id: string;
+  user_id: string | null;
+  provider_name: string;
+  model_name: string | null;
+  status: LLMProviderLogStatus;
+  latency_ms: number;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LLMProviderLogInsert = {
+  id?: string;
+  user_id?: string | null;
+  provider_name: string;
+  model_name?: string | null;
+  status: LLMProviderLogStatus;
+  latency_ms?: number;
+  error_message?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type LLMProviderLogUpdate = {
+  status?: LLMProviderLogStatus;
+  latency_ms?: number;
+  error_message?: string | null;
+  updated_at?: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -84,20 +124,31 @@ export type Database = {
         Update: ProfileUpdate;
         Relationships: [];
       };
+
       chat_sessions: {
         Row: ChatSession;
         Insert: ChatSessionInsert;
         Update: ChatSessionUpdate;
         Relationships: [];
       };
+
       chat_messages: {
         Row: ChatMessage;
         Insert: ChatMessageInsert;
         Update: ChatMessageUpdate;
         Relationships: [];
       };
+
+      llm_provider_logs: {
+        Row: LLMProviderLog;
+        Insert: LLMProviderLogInsert;
+        Update: LLMProviderLogUpdate;
+        Relationships: [];
+      };
     };
+
     Views: Record<string, never>;
+
     Functions: {
       is_admin: {
         Args: {
@@ -106,6 +157,7 @@ export type Database = {
         Returns: boolean;
       };
     };
+
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

@@ -1,5 +1,5 @@
 import { STATIC_FALLBACK_ANSWER } from "@/lib/llm/fallback";
-import { LLM_PROVIDERS } from "@/lib/llm/providers";
+import { getConfiguredProviders } from "@/lib/llm/providers";
 import type {
   LLMGenerateInput,
   LLMProvider,
@@ -26,8 +26,13 @@ export async function generateWithRouter(
 ): Promise<LLMRouterResult> {
   const routerStartedAt = Date.now();
   const attempts: LLMResult[] = [];
+  const providers = getConfiguredProviders();
 
-  for (const provider of LLM_PROVIDERS) {
+  for (const provider of providers) {
+    if (!provider.enabled) {
+      continue;
+    }
+
     const providerStartedAt = Date.now();
 
     try {

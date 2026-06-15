@@ -100,3 +100,37 @@ Sanity checks:
 
 Rollback notes:
 Drop public.chat_messages first, then public.chat_sessions.
+
+## 0004_create_llm_provider_logs.sql
+
+Date:
+2026-06-15
+
+Feature:
+Provider logging for multi-provider fallback.
+
+Reason:
+The app needs basic observability before adding more providers. Provider logs help debug fallback, timeout, rate limit, and authentication failures.
+
+Tables affected:
+- public.llm_provider_logs
+
+RLS changed:
+Yes. RLS enabled on provider logs.
+
+Indexes added:
+- idx_llm_provider_logs_created_at
+- idx_llm_provider_logs_user_id
+- idx_llm_provider_logs_provider_name
+
+Destructive:
+No.
+
+Sanity checks:
+- Send a chat message.
+- Confirm one or more provider attempts are logged.
+- Confirm admin can read provider logs.
+- Confirm normal users cannot directly read provider logs.
+
+Rollback notes:
+Drop public.llm_provider_logs if rollback is required.

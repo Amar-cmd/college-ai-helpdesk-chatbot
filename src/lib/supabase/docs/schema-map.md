@@ -96,3 +96,35 @@ Related modules:
 - src/lib/db/chatMessages.ts
 - src/app/api/chat/route.ts
 - src/components/chat/ChatWindow.tsx
+
+## llm_provider_logs
+
+Purpose:
+Stores LLM provider attempt diagnostics, including success, failure, timeout, latency, and fallback behavior.
+
+Main columns:
+- id
+- user_id
+- provider_name
+- model_name
+- status
+- latency_ms
+- error_message
+- created_at
+- updated_at
+
+Owner column:
+- user_id
+
+RLS:
+Enabled.
+
+Access:
+- Admins can read provider logs.
+- Normal users cannot read, insert, update, or delete provider logs.
+- Server-side service role writes logs from backend code.
+
+Related modules:
+- src/lib/db/providerLogs.ts
+- src/lib/llm/router.ts
+- src/app/api/chat/route.ts

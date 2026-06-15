@@ -5,7 +5,8 @@ export type LLMErrorType =
   | "server_error"
   | "unknown_error"
   | "disabled"
-  | "missing_api_key";
+  | "missing_api_key"
+  | "missing_model";
 
 export type LLMGenerateInput = {
   prompt: string;

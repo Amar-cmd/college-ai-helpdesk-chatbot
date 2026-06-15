@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
-import { generateWithRouter } from "@/lib/llm/router";
 import { getOwnedChatSessionById } from "@/lib/db/chatSessions";
 import { saveChatMessage } from "@/lib/db/chatMessages";
+import { saveProviderAttemptLogs } from "@/lib/db/providerLogs";
+import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
+import { generateWithRouter } from "@/lib/llm/router";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
 
@@ -113,6 +114,15 @@ export async function POST(request: Request) {
   const llmResult = await generateWithRouter({
     prompt,
   });
+
+  const providerLogResult = await saveProviderAttemptLogs(
+    user.id,
+    llmResult.attempts
+  );
+
+  if (!providerLogResult.ok) {
+    console.warn("Provider log save failed:", providerLogResult.error);
+  }
 
   const assistantMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
