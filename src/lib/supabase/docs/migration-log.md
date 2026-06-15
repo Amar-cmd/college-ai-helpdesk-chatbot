@@ -205,3 +205,38 @@ Sanity checks:
 
 Rollback notes:
 Drop public.answer_cache if rollback is required.
+
+## 0007_create_rate_limit_logs.sql
+
+Date:
+2026-06-15
+
+Feature:
+Rate limiting.
+
+Reason:
+The app needs per-user message limits and global LLM call limits to avoid abuse and free-tier exhaustion.
+
+Tables affected:
+- public.rate_limit_logs
+
+RLS changed:
+Yes. RLS enabled on rate_limit_logs.
+
+Indexes added:
+- idx_rate_limit_logs_user_id_created_at
+- idx_rate_limit_logs_scope_event_created_at
+- idx_rate_limit_logs_created_at
+
+Destructive:
+No.
+
+Sanity checks:
+- Rapid messages from one user get blocked after the limit.
+- Different users can still use chat normally.
+- Cache hits do not count toward global LLM limit.
+- Admin can read rate-limit logs.
+- Normal users cannot directly read logs.
+
+Rollback notes:
+Drop public.rate_limit_logs if rollback is required.

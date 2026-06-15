@@ -197,3 +197,34 @@ Related modules:
 - src/lib/db/answerCache.ts
 - src/lib/rag/normalizeQuestion.ts
 - src/app/api/chat/route.ts
+
+## rate_limit_logs
+
+Purpose:
+Stores allowed and blocked rate-limit events for user messages and global LLM traffic.
+
+Main columns:
+- id
+- user_id
+- scope
+- event_type
+- reason
+- created_at
+- updated_at
+
+Owner column:
+- user_id
+
+RLS:
+Enabled.
+
+Access:
+- Admins can read rate-limit logs.
+- Normal users cannot directly read, insert, update, or delete logs.
+- Server-side service role writes logs.
+
+Related modules:
+- src/lib/db/rateLimitLogs.ts
+- src/lib/rate-limit/userRateLimit.ts
+- src/lib/rate-limit/globalRateLimit.ts
+- src/app/api/chat/route.ts

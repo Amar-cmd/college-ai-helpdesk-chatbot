@@ -66,11 +66,33 @@ export function ChatWindow({
       const result = (await response.json()) as ChatApiResponse;
 
       if (!response.ok || "error" in result) {
-        setErrorMessage(
+        const friendlyErrorMessage =
           "error" in result
             ? result.error
-            : "The message could not be sent. Please try again."
-        );
+            : "The message could not be sent. Please try again.";
+
+        const localUserMessage: ChatMessageItem = {
+          id: crypto.randomUUID(),
+          role: "user",
+          content,
+          createdAt: new Date().toISOString(),
+        };
+
+        const localAssistantMessage: ChatMessageItem = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: friendlyErrorMessage,
+          createdAt: new Date().toISOString(),
+        };
+
+        setMessages((currentMessages) => [
+          ...currentMessages,
+          localUserMessage,
+          localAssistantMessage,
+        ]);
+
+        setErrorMessage(null);
+        scrollToBottom();
         return;
       }
 
@@ -81,7 +103,20 @@ export function ChatWindow({
       ]);
       scrollToBottom();
     } catch {
-      setErrorMessage("The message could not be sent. Please try again.");
+      const localAssistantMessage: ChatMessageItem = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "The message could not be sent. Please try again.",
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        localAssistantMessage,
+      ]);
+
+      setErrorMessage(null);
+      scrollToBottom();
     } finally {
       setIsLoading(false);
     }

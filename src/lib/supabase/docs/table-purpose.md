@@ -39,3 +39,9 @@ It is required so the chatbot can answer from official college-controlled inform
 The `answer_cache` table stores reusable answers for normalized repeated questions.
 
 It is required to reduce repeated LLM calls, improve response speed, and support higher usage through caching.
+
+## rate_limit_logs
+
+The `rate_limit_logs` table stores rate-limit decisions.
+
+It is required to protect free-tier LLM usage, reduce abuse, and keep traffic controlled during demo or high usage.

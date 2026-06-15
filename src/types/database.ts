@@ -186,6 +186,35 @@ export type AnswerCacheUpdate = {
   updated_at?: string;
 };
 
+export type RateLimitScope = "user_message" | "global_llm";
+export type RateLimitEventType = "allowed" | "blocked";
+
+export type RateLimitLog = {
+  id: string;
+  user_id: string | null;
+  scope: RateLimitScope;
+  event_type: RateLimitEventType;
+  reason: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RateLimitLogInsert = {
+  id?: string;
+  user_id?: string | null;
+  scope: RateLimitScope;
+  event_type: RateLimitEventType;
+  reason: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type RateLimitLogUpdate = {
+  event_type?: RateLimitEventType;
+  reason?: string;
+  updated_at?: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -228,6 +257,13 @@ export type Database = {
         Row: AnswerCache;
         Insert: AnswerCacheInsert;
         Update: AnswerCacheUpdate;
+        Relationships: [];
+      };
+
+      rate_limit_logs: {
+        Row: RateLimitLog;
+        Insert: RateLimitLogInsert;
+        Update: RateLimitLogUpdate;
         Relationships: [];
       };
     };

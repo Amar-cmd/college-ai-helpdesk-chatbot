@@ -76,3 +76,31 @@ export async function saveChatMessage(
     data: mapChatMessageToItem(data),
   };
 }
+
+export async function countUserMessagesSince(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  since: Date
+): Promise<DbResult<number>> {
+  const { count, error } = await supabase
+    .from("chat_messages")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("user_id", userId)
+    .eq("role", "user")
+    .gte("created_at", since.toISOString());
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  return {
+    ok: true,
+    data: count ?? 0,
+  };
+}

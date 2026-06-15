@@ -16,6 +16,8 @@ import {
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
 import type { AnswerSourceType } from "@/types/database";
+import { checkGlobalLlmRateLimit } from "@/lib/rate-limit/globalRateLimit";
+import { checkUserRateLimit } from "@/lib/rate-limit/userRateLimit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
       },
       {
         status: 401,
-      }
+      },
     );
   }
 
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
@@ -65,25 +67,28 @@ export async function POST(request: Request) {
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
-  if (typeof parsedBody.sessionId !== "string" || !parsedBody.sessionId.trim()) {
+  if (
+    typeof parsedBody.sessionId !== "string" ||
+    !parsedBody.sessionId.trim()
+  ) {
     return NextResponse.json(
       {
         error: "Chat session is required.",
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
   const sessionResult = await getOwnedChatSessionById(
     supabase,
     user.id,
-    parsedBody.sessionId
+    parsedBody.sessionId,
   );
 
   if (!sessionResult.ok) {
@@ -93,12 +98,26 @@ export async function POST(request: Request) {
       },
       {
         status: 404,
-      }
+      },
+    );
+  }
+
+const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
+
+  if (!userRateLimitResult.allowed) {
+    return NextResponse.json(
+      {
+        error: userRateLimitResult.message,
+        retryAfterSeconds: userRateLimitResult.retryAfterSeconds,
+      },
+      {
+        status: 429,
+      },
     );
   }
 
   const cachedAnswerResult = await getCachedAnswerForQuestion(
-    validatedMessage.value
+    validatedMessage.value,
   );
 
   if (!cachedAnswerResult.ok) {
@@ -121,7 +140,7 @@ export async function POST(request: Request) {
         },
         {
           status: 500,
-        }
+        },
       );
     }
 
@@ -140,7 +159,7 @@ export async function POST(request: Request) {
         },
         {
           status: 500,
-        }
+        },
       );
     }
 
@@ -168,13 +187,13 @@ export async function POST(request: Request) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 
   const knowledgeResult = await retrieveKnowledgeForQuestion(
     supabase,
-    validatedMessage.value
+    validatedMessage.value,
   );
 
   if (!knowledgeResult.ok) {
@@ -205,7 +224,7 @@ export async function POST(request: Request) {
         },
         {
           status: 500,
-        }
+        },
       );
     }
 
@@ -214,6 +233,37 @@ export async function POST(request: Request) {
       userMessage: userMessageResult.data,
       assistantMessage: assistantMessageResult.data,
       provider: "guardrail",
+      cached: false,
+    });
+  }
+
+  const globalLlmRateLimitResult = await checkGlobalLlmRateLimit(user.id);
+
+  if (!globalLlmRateLimitResult.allowed) {
+    const assistantMessageResult = await saveChatMessage(supabase, {
+      session_id: sessionResult.data.id,
+      user_id: user.id,
+      role: "assistant",
+      content: globalLlmRateLimitResult.message,
+      provider_used: "rate_limit",
+    });
+
+    if (!assistantMessageResult.ok) {
+      return NextResponse.json(
+        {
+          error: "The assistant response could not be saved. Please try again.",
+        },
+        {
+          status: 500,
+        },
+      );
+    }
+
+    return NextResponse.json({
+      sessionId: sessionResult.data.id,
+      userMessage: userMessageResult.data,
+      assistantMessage: assistantMessageResult.data,
+      provider: "rate_limit",
       cached: false,
     });
   }
@@ -229,7 +279,7 @@ export async function POST(request: Request) {
 
   const providerLogResult = await saveProviderAttemptLogs(
     user.id,
-    llmResult.attempts
+    llmResult.attempts,
   );
 
   if (!providerLogResult.ok) {
@@ -251,7 +301,7 @@ export async function POST(request: Request) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 
