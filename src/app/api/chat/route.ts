@@ -9,6 +9,8 @@ import { saveProviderAttemptLogs } from "@/lib/db/providerLogs";
 import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
 import { generateWithRouter } from "@/lib/llm/router";
 import { retrieveKnowledgeForQuestion } from "@/lib/rag/retrieveKnowledge";
+import { checkGlobalLlmRateLimit } from "@/lib/rate-limit/globalRateLimit";
+import { checkUserRateLimit } from "@/lib/rate-limit/userRateLimit";
 import {
   buildNoVerifiedKnowledgeAnswer,
   shouldUseNoVerifiedKnowledgeAnswer,
@@ -16,10 +18,35 @@ import {
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
 import type { AnswerSourceType } from "@/types/database";
-import { checkGlobalLlmRateLimit } from "@/lib/rate-limit/globalRateLimit";
-import { checkUserRateLimit } from "@/lib/rate-limit/userRateLimit";
 
-export async function POST(request: Request) {
+const CHAT_ERROR_MESSAGES = {
+  loginRequired: "You must be logged in to send a message.",
+  invalidRequestBody: "Invalid request body.",
+  sessionRequired: "Chat session is required.",
+  userMessageSaveFailed: "Your message could not be saved. Please try again.",
+  assistantMessageSaveFailed:
+    "The assistant response could not be saved. Please try again.",
+  unexpected:
+    "Chat is temporarily unavailable. Please refresh the page or try again shortly.",
+};
+
+function errorResponse(
+  message: string,
+  status: number,
+  extra?: Record<string, unknown>
+) {
+  return NextResponse.json(
+    {
+      error: message,
+      ...extra,
+    },
+    {
+      status,
+    }
+  );
+}
+
+async function handleChatRequest(request: Request) {
   const supabase = await createClient();
 
   const {
@@ -28,14 +55,7 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    return NextResponse.json(
-      {
-        error: "You must be logged in to send a message.",
-      },
-      {
-        status: 401,
-      },
-    );
+    return errorResponse(CHAT_ERROR_MESSAGES.loginRequired, 401);
   }
 
   let body: unknown;
@@ -43,14 +63,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      {
-        error: "Invalid request body.",
-      },
-      {
-        status: 400,
-      },
-    );
+    return errorResponse(CHAT_ERROR_MESSAGES.invalidRequestBody, 400);
   }
 
   const parsedBody = body as {
@@ -61,63 +74,36 @@ export async function POST(request: Request) {
   const validatedMessage = validateChatMessageInput(parsedBody.message);
 
   if (!validatedMessage.ok) {
-    return NextResponse.json(
-      {
-        error: validatedMessage.error,
-      },
-      {
-        status: 400,
-      },
-    );
+    return errorResponse(validatedMessage.error, 400);
   }
 
   if (
     typeof parsedBody.sessionId !== "string" ||
     !parsedBody.sessionId.trim()
   ) {
-    return NextResponse.json(
-      {
-        error: "Chat session is required.",
-      },
-      {
-        status: 400,
-      },
-    );
+    return errorResponse(CHAT_ERROR_MESSAGES.sessionRequired, 400);
   }
 
   const sessionResult = await getOwnedChatSessionById(
     supabase,
     user.id,
-    parsedBody.sessionId,
+    parsedBody.sessionId
   );
 
   if (!sessionResult.ok) {
-    return NextResponse.json(
-      {
-        error: sessionResult.error,
-      },
-      {
-        status: 404,
-      },
-    );
+    return errorResponse(sessionResult.error, 404);
   }
 
-const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
+  const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
 
   if (!userRateLimitResult.allowed) {
-    return NextResponse.json(
-      {
-        error: userRateLimitResult.message,
-        retryAfterSeconds: userRateLimitResult.retryAfterSeconds,
-      },
-      {
-        status: 429,
-      },
-    );
+    return errorResponse(userRateLimitResult.message, 429, {
+      retryAfterSeconds: userRateLimitResult.retryAfterSeconds,
+    });
   }
 
   const cachedAnswerResult = await getCachedAnswerForQuestion(
-    validatedMessage.value,
+    validatedMessage.value
   );
 
   if (!cachedAnswerResult.ok) {
@@ -134,14 +120,7 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
     });
 
     if (!userMessageResult.ok) {
-      return NextResponse.json(
-        {
-          error: "Your message could not be saved. Please try again.",
-        },
-        {
-          status: 500,
-        },
-      );
+      return errorResponse(CHAT_ERROR_MESSAGES.userMessageSaveFailed, 500);
     }
 
     const assistantMessageResult = await saveChatMessage(supabase, {
@@ -153,14 +132,7 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
     });
 
     if (!assistantMessageResult.ok) {
-      return NextResponse.json(
-        {
-          error: "The assistant response could not be saved. Please try again.",
-        },
-        {
-          status: 500,
-        },
-      );
+      return errorResponse(CHAT_ERROR_MESSAGES.assistantMessageSaveFailed, 500);
     }
 
     return NextResponse.json({
@@ -181,19 +153,12 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
   });
 
   if (!userMessageResult.ok) {
-    return NextResponse.json(
-      {
-        error: "Your message could not be saved. Please try again.",
-      },
-      {
-        status: 500,
-      },
-    );
+    return errorResponse(CHAT_ERROR_MESSAGES.userMessageSaveFailed, 500);
   }
 
   const knowledgeResult = await retrieveKnowledgeForQuestion(
     supabase,
-    validatedMessage.value,
+    validatedMessage.value
   );
 
   if (!knowledgeResult.ok) {
@@ -218,14 +183,7 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
     });
 
     if (!assistantMessageResult.ok) {
-      return NextResponse.json(
-        {
-          error: "The assistant response could not be saved. Please try again.",
-        },
-        {
-          status: 500,
-        },
-      );
+      return errorResponse(CHAT_ERROR_MESSAGES.assistantMessageSaveFailed, 500);
     }
 
     return NextResponse.json({
@@ -249,14 +207,7 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
     });
 
     if (!assistantMessageResult.ok) {
-      return NextResponse.json(
-        {
-          error: "The assistant response could not be saved. Please try again.",
-        },
-        {
-          status: 500,
-        },
-      );
+      return errorResponse(CHAT_ERROR_MESSAGES.assistantMessageSaveFailed, 500);
     }
 
     return NextResponse.json({
@@ -279,7 +230,7 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
 
   const providerLogResult = await saveProviderAttemptLogs(
     user.id,
-    llmResult.attempts,
+    llmResult.attempts
   );
 
   if (!providerLogResult.ok) {
@@ -295,14 +246,7 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
   });
 
   if (!assistantMessageResult.ok) {
-    return NextResponse.json(
-      {
-        error: "The assistant response could not be saved. Please try again.",
-      },
-      {
-        status: 500,
-      },
-    );
+    return errorResponse(CHAT_ERROR_MESSAGES.assistantMessageSaveFailed, 500);
   }
 
   const sourceType: Exclude<AnswerSourceType, "cache"> =
@@ -328,4 +272,14 @@ const userRateLimitResult = await checkUserRateLimit(supabase, user.id);
     provider: llmResult.providerUsed,
     cached: false,
   });
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handleChatRequest(request);
+  } catch (error) {
+    console.error("Unexpected chat API error:", error);
+
+    return errorResponse(CHAT_ERROR_MESSAGES.unexpected, 500);
+  }
 }
