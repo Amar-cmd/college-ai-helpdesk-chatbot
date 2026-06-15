@@ -1,0 +1,163 @@
+.card {
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.header h2,
+.card h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.count {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.emptyText {
+  margin: 12px 0 0;
+  color: var(--color-text-muted);
+}
+
+.list {
+  display: grid;
+  gap: 16px;
+}
+
+.item {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.itemHeader h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.itemHeader p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.activeBadge,
+.inactiveBadge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.activeBadge {
+  color: var(--color-success);
+  background: #ecfdf3;
+}
+
+.inactiveBadge {
+  color: var(--color-warning);
+  background: #fff7ed;
+}
+
+.contentPreview {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tags span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.actions {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.actions button,
+.editPanel summary {
+  width: fit-content;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.actions button:hover,
+.editPanel summary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.editPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.editPanel[open] summary {
+  margin-bottom: 14px;
+}
+
+@media (max-width: 720px) {
+  .header,
+  .itemHeader {
+    flex-direction: column;
+  }
+}

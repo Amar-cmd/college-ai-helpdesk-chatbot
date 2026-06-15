@@ -128,3 +128,39 @@ Related modules:
 - src/lib/db/providerLogs.ts
 - src/lib/llm/router.ts
 - src/app/api/chat/route.ts
+
+## knowledge_base
+
+Purpose:
+Stores verified college FAQs, rules, notices, policies, LMS help, placement information, and helpdesk content.
+
+Main columns:
+- id
+- title
+- content
+- category
+- tags
+- is_active
+- created_by
+- created_at
+- updated_at
+
+Owner column:
+- created_by
+
+RLS:
+Enabled.
+
+Access:
+- Authenticated users can read active rows.
+- Admins can read all rows.
+- Admins can insert rows.
+- Admins can update rows.
+- Admins can delete rows.
+
+Related modules:
+- src/lib/db/knowledgeBase.ts
+- src/app/admin/knowledge/page.tsx
+- src/app/admin/knowledge/actions.ts
+- src/components/admin/KnowledgeForm.tsx
+- src/components/admin/KnowledgeTable.tsx

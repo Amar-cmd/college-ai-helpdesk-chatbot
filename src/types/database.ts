@@ -115,6 +115,41 @@ export type LLMProviderLogUpdate = {
   updated_at?: string;
 };
 
+
+export type KnowledgeBaseItem = {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type KnowledgeBaseItemInsert = {
+  id?: string;
+  title: string;
+  content: string;
+  category?: string;
+  tags?: string[];
+  is_active?: boolean;
+  created_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type KnowledgeBaseItemUpdate = {
+  title?: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
+  is_active?: boolean;
+  updated_at?: string;
+};
+
+
 export type Database = {
   public: {
     Tables: {
@@ -143,6 +178,13 @@ export type Database = {
         Row: LLMProviderLog;
         Insert: LLMProviderLogInsert;
         Update: LLMProviderLogUpdate;
+        Relationships: [];
+      };
+
+      knowledge_base: {
+        Row: KnowledgeBaseItem;
+        Insert: KnowledgeBaseItemInsert;
+        Update: KnowledgeBaseItemUpdate;
         Relationships: [];
       };
     };

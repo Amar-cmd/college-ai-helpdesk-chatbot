@@ -27,3 +27,9 @@ It is required for chat history, refresh persistence, future LLM responses, futu
 The `llm_provider_logs` table stores provider attempt diagnostics.
 
 It is required because the chatbot uses multiple external LLM providers. Logs help verify which provider succeeded, which provider failed, and whether fallback behavior is working.
+
+## knowledge_base
+
+The `knowledge_base` table stores verified college information that the chatbot will later use for retrieval.
+
+It is required so the chatbot can answer from official college-controlled information instead of inventing policies, deadlines, fees, or contact details.

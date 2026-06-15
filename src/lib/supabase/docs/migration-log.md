@@ -134,3 +134,39 @@ Sanity checks:
 
 Rollback notes:
 Drop public.llm_provider_logs if rollback is required.
+
+## 0005_create_knowledge_base.sql
+
+Date:
+2026-06-15
+
+Feature:
+Admin-managed knowledge base.
+
+Reason:
+The chatbot needs verified college content before RAG retrieval can be added.
+
+Tables affected:
+- public.knowledge_base
+
+RLS changed:
+Yes. RLS enabled on knowledge_base.
+
+Indexes added:
+- idx_knowledge_base_is_active
+- idx_knowledge_base_category
+- idx_knowledge_base_updated_at
+- idx_knowledge_base_tags
+
+Destructive:
+No.
+
+Sanity checks:
+- Admin can add a knowledge base entry.
+- Admin can edit a knowledge base entry.
+- Admin can activate/deactivate a knowledge base entry.
+- Authenticated users can read only active rows.
+- Inactive rows are not exposed to normal student reads.
+
+Rollback notes:
+Drop public.knowledge_base if rollback is required.
