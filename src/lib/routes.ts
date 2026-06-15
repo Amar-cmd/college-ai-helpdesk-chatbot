@@ -3,4 +3,5 @@ export const ROUTES = {
   login: "/login",
   chat: "/chat",
   adminKnowledge: "/admin/knowledge",
+  adminDiagnostics: "/admin/diagnostics",
 } as const;

@@ -1,17 +1,20 @@
-import { KnowledgeForm } from "@/components/admin/KnowledgeForm";
-import { KnowledgeTable } from "@/components/admin/KnowledgeTable";
+import Link from "next/link";
+import { AdminDiagnostics } from "@/components/admin/AdminDiagnostics";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { requireAdmin } from "@/lib/auth/requireRole";
-import { getKnowledgeBaseItems } from "@/lib/db/knowledgeBase";
-import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import { getRecentProviderLogs } from "@/lib/db/providerLogs";
+import { getRecentRateLimitLogs } from "@/lib/db/rateLimitLogs";
 import { ROUTES } from "@/lib/routes";
+import { createClient } from "@/lib/supabase/server";
 
-export default async function AdminKnowledgePage() {
+export default async function AdminDiagnosticsPage() {
   const { profile } = await requireAdmin();
   const supabase = await createClient();
 
-  const knowledgeResult = await getKnowledgeBaseItems(supabase);
+  const [providerLogsResult, rateLimitLogsResult] = await Promise.all([
+    getRecentProviderLogs(supabase, 30),
+    getRecentRateLimitLogs(supabase, 30),
+  ]);
 
   return (
     <section className="page-section">
@@ -43,7 +46,7 @@ export default async function AdminKnowledgePage() {
                     letterSpacing: "-0.03em",
                   }}
                 >
-                  Knowledge Base Management
+                  Diagnostics
                 </h1>
                 <p className="text-muted" style={{ margin: "8px 0 0" }}>
                   Signed in as {profile.email}
@@ -51,25 +54,24 @@ export default async function AdminKnowledgePage() {
               </div>
 
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                <Link href={ROUTES.adminDiagnostics}>Diagnostics</Link>
+                <Link href={ROUTES.adminKnowledge}>Knowledge Base</Link>
                 <SignOutButton />
               </div>
             </div>
           </div>
 
-          <KnowledgeForm />
-
-          {knowledgeResult.ok ? (
-            <KnowledgeTable items={knowledgeResult.data} />
-          ) : (
+          {!providerLogsResult.ok || !rateLimitLogsResult.ok ? (
             <div className="card" style={{ padding: "24px" }}>
-              <h2 style={{ marginTop: 0 }}>
-                Knowledge base could not be loaded
-              </h2>
+              <h2 style={{ marginTop: 0 }}>Diagnostics could not be loaded</h2>
               <p className="text-muted" style={{ marginBottom: 0 }}>
                 Please refresh the page or try again later.
               </p>
             </div>
+          ) : (
+            <AdminDiagnostics
+              providerLogs={providerLogsResult.data}
+              rateLimitLogs={rateLimitLogsResult.data}
+            />
           )}
         </div>
       </div>

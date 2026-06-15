@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  Database,
   RateLimitEventType,
+  RateLimitLog,
   RateLimitLogInsert,
   RateLimitScope,
 } from "@/types/database";
@@ -107,5 +110,28 @@ export async function saveRateLimitEvent({
   return {
     ok: true,
     data: null,
+  };
+}
+
+export async function getRecentRateLimitLogs(
+  supabase: SupabaseClient<Database>,
+  limit = 30
+): Promise<DbResult<RateLimitLog[]>> {
+  const { data, error } = await supabase
+    .from("rate_limit_logs")
+    .select("id, user_id, scope, event_type, reason, created_at, updated_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  return {
+    ok: true,
+    data,
   };
 }

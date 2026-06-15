@@ -1,13 +1,17 @@
 import type {
+  LLMProviderLog,
   LLMProviderLogInsert,
   LLMProviderLogStatus,
 } from "@/types/database";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LLMErrorType, LLMResult } from "@/lib/llm/types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/types/database";
 
-type DbResult =
+type DbResult<T> =
   | {
       ok: true;
+      data: T;
     }
   | {
       ok: false;
@@ -15,25 +19,13 @@ type DbResult =
     };
 
 function mapErrorTypeToStatus(errorType: LLMErrorType): LLMProviderLogStatus {
-  if (errorType === "rate_limit") {
-    return "rate_limited";
-  }
-
-  if (errorType === "timeout") {
-    return "timeout";
-  }
-
+  if (errorType === "rate_limit") return "rate_limited";
+  if (errorType === "timeout") return "timeout";
   if (errorType === "auth_error" || errorType === "missing_api_key") {
     return "auth_error";
   }
-
-  if (errorType === "server_error") {
-    return "server_error";
-  }
-
-  if (errorType === "unknown_error") {
-    return "unknown_error";
-  }
+  if (errorType === "server_error") return "server_error";
+  if (errorType === "unknown_error") return "unknown_error";
 
   return "failed";
 }
@@ -66,10 +58,11 @@ function mapAttemptToLogRow(
 export async function saveProviderAttemptLogs(
   userId: string,
   attempts: LLMResult[]
-): Promise<DbResult> {
+): Promise<DbResult<null>> {
   if (attempts.length === 0) {
     return {
       ok: true,
+      data: null,
     };
   }
 
@@ -95,5 +88,31 @@ export async function saveProviderAttemptLogs(
 
   return {
     ok: true,
+    data: null,
+  };
+}
+
+export async function getRecentProviderLogs(
+  supabase: SupabaseClient<Database>,
+  limit = 30
+): Promise<DbResult<LLMProviderLog[]>> {
+  const { data, error } = await supabase
+    .from("llm_provider_logs")
+    .select(
+      "id, user_id, provider_name, model_name, status, latency_ms, error_message, created_at, updated_at"
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  return {
+    ok: true,
+    data,
   };
 }
