@@ -64,3 +64,39 @@ Sanity checks:
 
 Rollback notes:
 Drop recreated admin policies and public.is_admin(uuid) if rollback is required.
+
+## 0003_create_chat_sessions_and_messages.sql
+
+Date:
+2026-06-15
+
+Feature:
+Chat persistence.
+
+Reason:
+The app needs persistent chat sessions and messages before adding LLM provider integration.
+
+Tables affected:
+- public.chat_sessions
+- public.chat_messages
+
+RLS changed:
+Yes. RLS enabled on both chat tables.
+
+Indexes added:
+- idx_chat_sessions_user_id
+- idx_chat_sessions_user_updated_at
+- idx_chat_messages_session_created_at
+- idx_chat_messages_user_id
+
+Destructive:
+No.
+
+Sanity checks:
+- Logged-in user can create a chat session.
+- Logged-in user can save user and assistant messages.
+- Page refresh shows saved messages.
+- User cannot access another user's chat data.
+
+Rollback notes:
+Drop public.chat_messages first, then public.chat_sessions.

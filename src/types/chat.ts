@@ -1,4 +1,4 @@
-export type ChatMessageRole = "user" | "assistant" | "system";
+import type { ChatMessageRole } from "./database";
 
 export type ChatMessageItem = {
   id: string;

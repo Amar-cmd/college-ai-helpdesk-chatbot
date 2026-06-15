@@ -11,23 +11,31 @@ import styles from "./ChatWindow.module.css";
 type ChatWindowProps = {
   userEmail: string;
   userRole: string;
+  sessionId: string;
+  initialMessages: ChatMessageItem[];
+  initialError?: string | null;
 };
 
-function createMessageId() {
-  return crypto.randomUUID();
-}
+type ChatApiResponse =
+  | {
+      sessionId: string;
+      userMessage: ChatMessageItem;
+      assistantMessage: ChatMessageItem;
+    }
+  | {
+      error: string;
+    };
 
-function createMockAssistantResponse(userMessage: string) {
-  return `This is a test response from College AI Helpdesk.
-
-Your question was: "${userMessage}"
-
-In the next steps, this response will come from the database-backed knowledge base and then from the controlled LLM provider flow.`;
-}
-
-export function ChatWindow({ userEmail, userRole }: ChatWindowProps) {
-  const [messages, setMessages] = useState<ChatMessageItem[]>([]);
+export function ChatWindow({
+  userEmail,
+  userRole,
+  sessionId,
+  initialMessages,
+  initialError = null,
+}: ChatWindowProps) {
+  const [messages, setMessages] = useState<ChatMessageItem[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
 
   function scrollToBottom() {
@@ -39,32 +47,44 @@ export function ChatWindow({ userEmail, userRole }: ChatWindowProps) {
     }, 50);
   }
 
-  function handleSendMessage(content: string) {
-    const now = new Date().toISOString();
-
-    const userMessage: ChatMessageItem = {
-      id: createMessageId(),
-      role: "user",
-      content,
-      createdAt: now,
-    };
-
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
+  async function handleSendMessage(content: string) {
     setIsLoading(true);
-    scrollToBottom();
+    setErrorMessage(null);
 
-    window.setTimeout(() => {
-      const assistantMessage: ChatMessageItem = {
-        id: createMessageId(),
-        role: "assistant",
-        content: createMockAssistantResponse(content),
-        createdAt: new Date().toISOString(),
-      };
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          message: content,
+        }),
+      });
 
-      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
-      setIsLoading(false);
+      const result = (await response.json()) as ChatApiResponse;
+
+      if (!response.ok || "error" in result) {
+        setErrorMessage(
+          "error" in result
+            ? result.error
+            : "The message could not be sent. Please try again."
+        );
+        return;
+      }
+
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        result.userMessage,
+        result.assistantMessage,
+      ]);
       scrollToBottom();
-    }, 650);
+    } catch {
+      setErrorMessage("The message could not be sent. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -80,6 +100,12 @@ export function ChatWindow({ userEmail, userRole }: ChatWindowProps) {
 
         <ProviderStatus status={isLoading ? "thinking" : "ready"} />
       </header>
+
+      {errorMessage ? (
+        <div className={styles.errorBanner} role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
 
       <div className={styles.chatBody} ref={chatBodyRef}>
         {messages.length === 0 ? (

@@ -30,3 +30,69 @@ Related modules:
 - src/lib/auth/requireRole.ts
 - src/lib/supabase/server.ts
 - src/lib/supabase/client.ts
+
+## chat_sessions
+
+Purpose:
+Stores user-owned chatbot conversation sessions.
+
+Main columns:
+- id
+- user_id
+- title
+- created_at
+- updated_at
+
+Owner column:
+- user_id
+
+RLS:
+Enabled.
+
+Access:
+- Users can read their own chat sessions.
+- Users can insert their own chat sessions.
+- Users can update their own chat sessions.
+
+Related tables:
+- profiles
+- chat_messages
+
+Related modules:
+- src/lib/db/chatSessions.ts
+- src/app/chat/page.tsx
+- src/app/api/chat/route.ts
+
+## chat_messages
+
+Purpose:
+Stores messages belonging to user-owned chatbot sessions.
+
+Main columns:
+- id
+- session_id
+- user_id
+- role
+- content
+- provider_used
+- created_at
+- updated_at
+
+Owner column:
+- user_id
+
+RLS:
+Enabled.
+
+Access:
+- Users can read their own chat messages.
+- Users can insert messages into their own chat sessions.
+
+Related tables:
+- profiles
+- chat_sessions
+
+Related modules:
+- src/lib/db/chatMessages.ts
+- src/app/api/chat/route.ts
+- src/components/chat/ChatWindow.tsx
