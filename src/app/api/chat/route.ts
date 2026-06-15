@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  getCachedAnswerForQuestion,
+  saveAnswerCache,
+} from "@/lib/db/answerCache";
 import { getOwnedChatSessionById } from "@/lib/db/chatSessions";
 import { saveChatMessage } from "@/lib/db/chatMessages";
 import { saveProviderAttemptLogs } from "@/lib/db/providerLogs";
@@ -11,6 +15,7 @@ import {
 } from "@/lib/safety/collegeGuardrails";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
+import type { AnswerSourceType } from "@/types/database";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -92,6 +97,62 @@ export async function POST(request: Request) {
     );
   }
 
+  const cachedAnswerResult = await getCachedAnswerForQuestion(
+    validatedMessage.value
+  );
+
+  if (!cachedAnswerResult.ok) {
+    console.warn("Answer cache lookup failed:", cachedAnswerResult.error);
+  }
+
+  if (cachedAnswerResult.ok && cachedAnswerResult.data) {
+    const userMessageResult = await saveChatMessage(supabase, {
+      session_id: sessionResult.data.id,
+      user_id: user.id,
+      role: "user",
+      content: validatedMessage.value,
+      provider_used: null,
+    });
+
+    if (!userMessageResult.ok) {
+      return NextResponse.json(
+        {
+          error: "Your message could not be saved. Please try again.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const assistantMessageResult = await saveChatMessage(supabase, {
+      session_id: sessionResult.data.id,
+      user_id: user.id,
+      role: "assistant",
+      content: cachedAnswerResult.data.answer,
+      provider_used: "cache",
+    });
+
+    if (!assistantMessageResult.ok) {
+      return NextResponse.json(
+        {
+          error: "The assistant response could not be saved. Please try again.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    return NextResponse.json({
+      sessionId: sessionResult.data.id,
+      userMessage: userMessageResult.data,
+      assistantMessage: assistantMessageResult.data,
+      provider: "cache",
+      cached: true,
+    });
+  }
+
   const userMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
     user_id: user.id,
@@ -153,6 +214,7 @@ export async function POST(request: Request) {
       userMessage: userMessageResult.data,
       assistantMessage: assistantMessageResult.data,
       provider: "guardrail",
+      cached: false,
     });
   }
 
@@ -193,10 +255,27 @@ export async function POST(request: Request) {
     );
   }
 
+  const sourceType: Exclude<AnswerSourceType, "cache"> =
+    hasVerifiedKnowledgeContext ? "knowledge" : "llm";
+
+  if (llmResult.success) {
+    const cacheSaveResult = await saveAnswerCache({
+      originalQuestion: validatedMessage.value,
+      answer: llmResult.text,
+      sourceType,
+      providerUsed: llmResult.providerUsed,
+    });
+
+    if (!cacheSaveResult.ok) {
+      console.warn("Answer cache save failed:", cacheSaveResult.error);
+    }
+  }
+
   return NextResponse.json({
     sessionId: sessionResult.data.id,
     userMessage: userMessageResult.data,
     assistantMessage: assistantMessageResult.data,
     provider: llmResult.providerUsed,
+    cached: false,
   });
 }

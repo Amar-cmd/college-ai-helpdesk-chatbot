@@ -37,6 +37,11 @@ const FILLER_WORDS = new Set([
   "at",
   "and",
   "or",
+  "what",
+  "when",
+  "where",
+  "how",
+  "which",
 ]);
 
 export function normalizeQuestion(question: string) {
@@ -59,4 +64,14 @@ export function extractQuestionKeywords(question: string) {
         .filter((word) => !FILLER_WORDS.has(word))
     )
   ).slice(0, 12);
+}
+
+export function normalizeQuestionForCache(question: string) {
+  const keywords = extractQuestionKeywords(question);
+
+  if (keywords.length === 0) {
+    return normalizeQuestion(question);
+  }
+
+  return [...keywords].sort().join(" ");
 }

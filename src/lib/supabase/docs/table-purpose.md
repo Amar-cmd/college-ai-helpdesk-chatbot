@@ -33,3 +33,9 @@ It is required because the chatbot uses multiple external LLM providers. Logs he
 The `knowledge_base` table stores verified college information that the chatbot will later use for retrieval.
 
 It is required so the chatbot can answer from official college-controlled information instead of inventing policies, deadlines, fees, or contact details.
+
+## answer_cache
+
+The `answer_cache` table stores reusable answers for normalized repeated questions.
+
+It is required to reduce repeated LLM calls, improve response speed, and support higher usage through caching.

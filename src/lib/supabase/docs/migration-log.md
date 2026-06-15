@@ -170,3 +170,38 @@ Sanity checks:
 
 Rollback notes:
 Drop public.knowledge_base if rollback is required.
+
+## 0006_create_answer_cache.sql
+
+Date:
+2026-06-15
+
+Feature:
+Answer cache.
+
+Reason:
+Repeated questions should reuse a cached answer instead of calling RAG and LLM every time.
+
+Tables affected:
+- public.answer_cache
+
+RLS changed:
+Yes. RLS enabled on answer_cache.
+
+Indexes added:
+- idx_answer_cache_normalized_question
+- idx_answer_cache_expires_at
+- idx_answer_cache_source_type
+
+Destructive:
+No.
+
+Sanity checks:
+- First repeated FAQ question creates a cache row.
+- Second same question returns provider_used = cache in chat_messages.
+- hit_count increases on cache hit.
+- Expired cache rows are not used.
+- Chat still works if service role key is missing.
+
+Rollback notes:
+Drop public.answer_cache if rollback is required.

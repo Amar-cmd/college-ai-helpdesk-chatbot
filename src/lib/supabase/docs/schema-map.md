@@ -164,3 +164,36 @@ Related modules:
 - src/app/admin/knowledge/actions.ts
 - src/components/admin/KnowledgeForm.tsx
 - src/components/admin/KnowledgeTable.tsx
+
+## answer_cache
+
+Purpose:
+Stores reusable answers for normalized repeated questions to reduce repeated LLM calls.
+
+Main columns:
+- id
+- normalized_question
+- original_question
+- answer
+- source_type
+- provider_used
+- expires_at
+- hit_count
+- created_at
+- updated_at
+
+Owner column:
+- None. Cache is shared and backend-managed.
+
+RLS:
+Enabled.
+
+Access:
+- Admins can read cache rows.
+- Normal users cannot directly read, insert, update, or delete cache rows.
+- Server-side service role checks, writes, and updates cache rows.
+
+Related modules:
+- src/lib/db/answerCache.ts
+- src/lib/rag/normalizeQuestion.ts
+- src/app/api/chat/route.ts

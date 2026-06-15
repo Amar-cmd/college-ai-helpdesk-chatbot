@@ -115,7 +115,6 @@ export type LLMProviderLogUpdate = {
   updated_at?: string;
 };
 
-
 export type KnowledgeBaseItem = {
   id: string;
   title: string;
@@ -149,6 +148,43 @@ export type KnowledgeBaseItemUpdate = {
   updated_at?: string;
 };
 
+export type AnswerSourceType = "cache" | "knowledge" | "llm" | "fallback";
+
+export type AnswerCache = {
+  id: string;
+  normalized_question: string;
+  original_question: string;
+  answer: string;
+  source_type: AnswerSourceType;
+  provider_used: string | null;
+  expires_at: string;
+  hit_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AnswerCacheInsert = {
+  id?: string;
+  normalized_question: string;
+  original_question: string;
+  answer: string;
+  source_type: AnswerSourceType;
+  provider_used?: string | null;
+  expires_at: string;
+  hit_count?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AnswerCacheUpdate = {
+  original_question?: string;
+  answer?: string;
+  source_type?: AnswerSourceType;
+  provider_used?: string | null;
+  expires_at?: string;
+  hit_count?: number;
+  updated_at?: string;
+};
 
 export type Database = {
   public: {
@@ -185,6 +221,13 @@ export type Database = {
         Row: KnowledgeBaseItem;
         Insert: KnowledgeBaseItemInsert;
         Update: KnowledgeBaseItemUpdate;
+        Relationships: [];
+      };
+
+      answer_cache: {
+        Row: AnswerCache;
+        Insert: AnswerCacheInsert;
+        Update: AnswerCacheUpdate;
         Relationships: [];
       };
     };
