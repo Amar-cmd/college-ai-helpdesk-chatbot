@@ -6,6 +6,7 @@ import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
 import { generateWithRouter } from "@/lib/llm/router";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
+import { retrieveKnowledgeForQuestion } from "@/lib/rag/retrieveKnowledge";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       },
       {
         status: 401,
-      }
+      },
     );
   }
 
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
@@ -55,25 +56,28 @@ export async function POST(request: Request) {
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
-  if (typeof parsedBody.sessionId !== "string" || !parsedBody.sessionId.trim()) {
+  if (
+    typeof parsedBody.sessionId !== "string" ||
+    !parsedBody.sessionId.trim()
+  ) {
     return NextResponse.json(
       {
         error: "Chat session is required.",
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
   const sessionResult = await getOwnedChatSessionById(
     supabase,
     user.id,
-    parsedBody.sessionId
+    parsedBody.sessionId,
   );
 
   if (!sessionResult.ok) {
@@ -83,7 +87,7 @@ export async function POST(request: Request) {
       },
       {
         status: 404,
-      }
+      },
     );
   }
 
@@ -102,13 +106,22 @@ export async function POST(request: Request) {
       },
       {
         status: 500,
-      }
+      },
     );
+  }
+
+  const knowledgeResult = await retrieveKnowledgeForQuestion(
+    supabase,
+    validatedMessage.value,
+  );
+
+  if (!knowledgeResult.ok) {
+    console.warn("Knowledge retrieval failed:", knowledgeResult.error);
   }
 
   const prompt = buildCollegeHelpdeskPrompt({
     question: validatedMessage.value,
-    collegeContext: "",
+    collegeContext: knowledgeResult.ok ? knowledgeResult.context : "",
   });
 
   const llmResult = await generateWithRouter({
@@ -117,7 +130,7 @@ export async function POST(request: Request) {
 
   const providerLogResult = await saveProviderAttemptLogs(
     user.id,
-    llmResult.attempts
+    llmResult.attempts,
   );
 
   if (!providerLogResult.ok) {
@@ -139,7 +152,7 @@ export async function POST(request: Request) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 
