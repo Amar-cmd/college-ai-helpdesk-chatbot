@@ -1,0 +1,1 @@
+export const MAX_KNOWLEDGE_CONTENT_LENGTH = 12000;

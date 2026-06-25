@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createKnowledgeBaseItemAction } from "@/app/admin/knowledge/actions";
 import type { KnowledgeActionState } from "@/types/knowledge";
+import { KnowledgeContentField } from "./KnowledgeContentField";
 import styles from "./KnowledgeForm.module.css";
 
 const initialState: KnowledgeActionState = {
@@ -55,15 +56,7 @@ export function KnowledgeForm() {
           />
         </label>
 
-        <label className={styles.field}>
-          <span>Content</span>
-          <textarea
-            name="content"
-            placeholder="Write the verified college information here."
-            rows={6}
-            required
-          />
-        </label>
+        <KnowledgeContentField rows={6} />
 
         <label className={styles.checkboxField}>
           <input name="is_active" type="checkbox" defaultChecked />

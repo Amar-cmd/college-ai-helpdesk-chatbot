@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { MAX_KNOWLEDGE_CONTENT_LENGTH } from "@/config/knowledge";
 import { requireAdmin } from "@/lib/auth/requireRole";
 import {
   createKnowledgeBaseItem,
@@ -53,10 +54,10 @@ function validateKnowledgeInput(formData: FormData) {
     };
   }
 
-  if (content.length > 12000) {
+  if (content.length > MAX_KNOWLEDGE_CONTENT_LENGTH) {
     return {
       ok: false as const,
-      error: "Content cannot exceed 12,000 characters.",
+      error: `Content cannot exceed ${MAX_KNOWLEDGE_CONTENT_LENGTH.toLocaleString("en-US")} characters.`,
     };
   }
 

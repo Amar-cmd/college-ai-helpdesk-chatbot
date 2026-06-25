@@ -136,14 +136,15 @@
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .actions button:hover,
 .editPanel summary:hover {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #fff;
 }
 
 .editPanel {

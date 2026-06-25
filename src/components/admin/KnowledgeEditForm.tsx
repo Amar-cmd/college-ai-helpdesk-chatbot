@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { updateKnowledgeBaseItemAction } from "@/app/admin/knowledge/actions";
 import type { KnowledgeBaseItem } from "@/types/database";
 import type { KnowledgeActionState } from "@/types/knowledge";
+import { KnowledgeContentField } from "./KnowledgeContentField";
 import styles from "./KnowledgeForm.module.css";
 
 const initialState: KnowledgeActionState = {
@@ -40,10 +41,7 @@ export function KnowledgeEditForm({ item }: KnowledgeEditFormProps) {
         <input name="tags" defaultValue={item.tags.join(", ")} />
       </label>
 
-      <label className={styles.field}>
-        <span>Content</span>
-        <textarea name="content" defaultValue={item.content} rows={5} required />
-      </label>
+      <KnowledgeContentField defaultValue={item.content} rows={5} />
 
       <label className={styles.checkboxField}>
         <input name="is_active" type="checkbox" defaultChecked={item.is_active} />
