@@ -90,3 +90,32 @@ export async function getOrCreateDefaultChatSession(
     data: createdSession,
   };
 }
+
+export async function createGuestChatSession(
+  supabase: SupabaseClient<Database>,
+  guestUserId: string,
+  guestClientId: string
+): Promise<DbResult<ChatSession>> {
+  const shortClientId = guestClientId.trim().slice(0, 8);
+
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .insert({
+      user_id: guestUserId,
+      title: `Guest chat ${shortClientId}`,
+    })
+    .select("id, user_id, title, created_at, updated_at")
+    .single();
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  return {
+    ok: true,
+    data,
+  };
+}

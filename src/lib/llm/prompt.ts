@@ -55,7 +55,7 @@ export function buildWebSearchHelpdeskPrompt({
   const safeContext = webSearchContext.trim();
 
   return `
-You are College AI Helpdesk.
+You are AI Buddy, the IMS Ghaziabad academic assistant.
 
 Answer only in English.
 
@@ -83,7 +83,7 @@ export function buildGeneralAiFallbackPrompt({
   question,
 }: BuildGeneralAiFallbackPromptInput) {
   return `
-You are College AI Helpdesk.
+You are AI Buddy, the IMS Ghaziabad academic assistant.
 
 Answer only in English.
 
