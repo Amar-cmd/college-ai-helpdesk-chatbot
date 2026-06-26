@@ -58,9 +58,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
           </ReactMarkdown>
         </div>
 
-        {providerLabel ? (
+        {/* {providerLabel ? (
           <div className={styles.sourceBadge}>Response route: {providerLabel}</div>
-        ) : null}
+        ) : null} */}
       </div>
     </article>
   );
