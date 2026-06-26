@@ -302,15 +302,12 @@
 
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ensureGuestProfile, isGuestChatEnabled } from "@/lib/auth/guestChat";
+import { isGuestChatEnabled } from "@/lib/auth/guestChat";
 import {
   getCachedAnswerForQuestion,
   saveAnswerCache,
 } from "@/lib/db/answerCache";
-import {
-  createGuestChatSession,
-  getOwnedChatSessionById,
-} from "@/lib/db/chatSessions";
+import { getOwnedChatSessionById } from "@/lib/db/chatSessions";
 import { saveChatMessage } from "@/lib/db/chatMessages";
 import { saveProviderAttemptLogs } from "@/lib/db/providerLogs";
 import {
@@ -321,12 +318,12 @@ import {
 import { generateWithRouter } from "@/lib/llm/router";
 import { retrieveKnowledgeForQuestion } from "@/lib/rag/retrieveKnowledge";
 import { checkGlobalLlmRateLimit } from "@/lib/rate-limit/globalRateLimit";
-import { checkGuestRateLimit } from "@/lib/rate-limit/guestRateLimit";
 import { checkUserRateLimit } from "@/lib/rate-limit/userRateLimit";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { retrieveWebSearchForQuestion } from "@/lib/web-search/retrieveWebSearch";
+import type { ChatMessageItem } from "@/types/chat";
 import type { AnswerSourceType, Database } from "@/types/database";
 
 const CHAT_ERROR_MESSAGES = {
@@ -336,10 +333,7 @@ const CHAT_ERROR_MESSAGES = {
   userMessageSaveFailed: "Your message could not be saved. Please try again.",
   assistantMessageSaveFailed:
     "The assistant response could not be saved. Please try again.",
-  guestChatUnavailable:
-    "Guest chat is temporarily unavailable. Please try again later or sign in with your account.",
-  invalidGuestSession:
-    "Guest chat session could not be prepared. Please refresh the page and try again.",
+  guestChatDisabled: "Guest chat is not enabled.",
   unexpected:
     "Chat is temporarily unavailable. Please refresh the page or try again shortly.",
 };
@@ -393,6 +387,197 @@ function validateGuestClientId(value: unknown) {
   };
 }
 
+function createLocalChatMessage({
+  role,
+  content,
+  providerUsed = null,
+}: {
+  role: "user" | "assistant";
+  content: string;
+  providerUsed?: string | null;
+}): ChatMessageItem {
+  return {
+    id: crypto.randomUUID(),
+    role,
+    content,
+    createdAt: new Date().toISOString(),
+    providerUsed,
+  };
+}
+
+async function buildAnswerContext({
+  supabase,
+  question,
+}: {
+  supabase: DbClient;
+  question: string;
+}) {
+  let collegeContext = "";
+  let answerContextSource: AnswerContextSource = "ai_fallback";
+
+  try {
+    const knowledgeResult = await retrieveKnowledgeForQuestion(
+      supabase,
+      question
+    );
+
+    if (knowledgeResult.ok) {
+      collegeContext = knowledgeResult.context;
+    } else {
+      console.warn("Knowledge retrieval failed:", knowledgeResult.error);
+    }
+  } catch (error) {
+    console.warn("Knowledge retrieval threw an error:", error);
+  }
+
+  const hasVerifiedKnowledgeContext = collegeContext.trim().length > 0;
+
+  if (hasVerifiedKnowledgeContext) {
+    return {
+      answerContext: collegeContext,
+      answerContextSource: "knowledge" as const,
+    };
+  }
+
+  try {
+    const webSearchResult = await retrieveWebSearchForQuestion(question);
+
+    if (webSearchResult.ok) {
+      return {
+        answerContext: webSearchResult.context,
+        answerContextSource: "web_search" as const,
+      };
+    }
+
+    console.warn("Web search fallback unavailable:", webSearchResult.error);
+  } catch (error) {
+    console.warn("Web search fallback threw an error:", error);
+  }
+
+  return {
+    answerContext: "",
+    answerContextSource,
+  };
+}
+
+function buildPromptForContext({
+  question,
+  answerContext,
+  answerContextSource,
+}: {
+  question: string;
+  answerContext: string;
+  answerContextSource: AnswerContextSource;
+}) {
+  if (answerContextSource === "knowledge") {
+    return buildCollegeHelpdeskPrompt({
+      question,
+      collegeContext: answerContext,
+    });
+  }
+
+  if (answerContextSource === "web_search") {
+    return buildWebSearchHelpdeskPrompt({
+      question,
+      webSearchContext: answerContext,
+    });
+  }
+
+  return buildGeneralAiFallbackPrompt({
+    question,
+  });
+}
+
+async function handleGuestChatRequest({
+  supabase,
+  parsedBody,
+  message,
+}: {
+  supabase: DbClient;
+  parsedBody: {
+    sessionId?: unknown;
+    guestClientId?: unknown;
+  };
+  message: string;
+}) {
+  if (!isGuestChatEnabled()) {
+    return errorResponse(CHAT_ERROR_MESSAGES.guestChatDisabled, 403);
+  }
+
+  const requestedSessionId =
+    typeof parsedBody.sessionId === "string" ? parsedBody.sessionId.trim() : "";
+
+  if (!requestedSessionId) {
+    const guestClientIdResult = validateGuestClientId(parsedBody.guestClientId);
+
+    if (!guestClientIdResult.ok) {
+      return errorResponse(guestClientIdResult.error, 400);
+    }
+  }
+
+  const sessionId = requestedSessionId || `guest-${crypto.randomUUID()}`;
+
+  const userMessage = createLocalChatMessage({
+    role: "user",
+    content: message,
+  });
+
+  const globalLlmRateLimitResult = await checkGlobalLlmRateLimit(null);
+
+  if (!globalLlmRateLimitResult.allowed) {
+    return NextResponse.json({
+      sessionId,
+      userMessage,
+      assistantMessage: createLocalChatMessage({
+        role: "assistant",
+        content: globalLlmRateLimitResult.message,
+        providerUsed: "rate_limit",
+      }),
+      provider: "rate_limit",
+      cached: false,
+      contextSource: "rate_limit",
+    });
+  }
+
+  const adminClient = createAdminClient();
+  const guestDbClient = adminClient ?? supabase;
+
+  const { answerContext, answerContextSource } = await buildAnswerContext({
+    supabase: guestDbClient,
+    question: message,
+  });
+
+  const prompt = buildPromptForContext({
+    question: message,
+    answerContext,
+    answerContextSource,
+  });
+
+  const llmResult = await generateWithRouter({
+    prompt,
+  });
+
+  const providerUsed =
+    answerContextSource === "web_search"
+      ? `web_search_${llmResult.providerUsed}`
+      : answerContextSource === "ai_fallback"
+        ? `ai_fallback_${llmResult.providerUsed}`
+        : llmResult.providerUsed;
+
+  return NextResponse.json({
+    sessionId,
+    userMessage,
+    assistantMessage: createLocalChatMessage({
+      role: "assistant",
+      content: llmResult.text,
+      providerUsed,
+    }),
+    provider: providerUsed,
+    cached: false,
+    contextSource: answerContextSource,
+  });
+}
+
 async function handleChatRequest(request: Request) {
   const supabase = await createClient();
 
@@ -424,86 +609,38 @@ async function handleChatRequest(request: Request) {
     error: userError,
   } = await supabase.auth.getUser();
 
-  let activeUserId: string;
-  let activeDbClient: DbClient = supabase;
-  let isGuestRequest = false;
-
-  if (!userError && user) {
-    activeUserId = user.id;
-  } else if (wantsGuestMode && isGuestChatEnabled()) {
-    const guestProfileResult = await ensureGuestProfile();
-
-    if (!guestProfileResult.ok) {
-      console.warn("Guest profile setup failed:", guestProfileResult.error);
-
-      return errorResponse(CHAT_ERROR_MESSAGES.guestChatUnavailable, 503);
+  if (userError || !user) {
+    if (wantsGuestMode) {
+      return handleGuestChatRequest({
+        supabase,
+        parsedBody,
+        message: validatedMessage.value,
+      });
     }
 
-    const adminClient = createAdminClient();
-
-    if (!adminClient) {
-      return errorResponse(CHAT_ERROR_MESSAGES.guestChatUnavailable, 503);
-    }
-
-    activeUserId = guestProfileResult.data.id;
-    activeDbClient = adminClient;
-    isGuestRequest = true;
-  } else {
     return errorResponse(CHAT_ERROR_MESSAGES.loginRequired, 401);
   }
+
+  const activeUserId = user.id;
 
   const requestedSessionId =
     typeof parsedBody.sessionId === "string" ? parsedBody.sessionId.trim() : "";
 
-  let sessionResult: Awaited<ReturnType<typeof getOwnedChatSessionById>>;
-
-  if (isGuestRequest) {
-    if (requestedSessionId) {
-      sessionResult = await getOwnedChatSessionById(
-        activeDbClient,
-        activeUserId,
-        requestedSessionId
-      );
-    } else {
-      const guestClientIdResult = validateGuestClientId(parsedBody.guestClientId);
-
-      if (!guestClientIdResult.ok) {
-        return errorResponse(guestClientIdResult.error, 400);
-      }
-
-      sessionResult = await createGuestChatSession(
-        activeDbClient,
-        activeUserId,
-        guestClientIdResult.value
-      );
-    }
-
-    if (!sessionResult.ok) {
-      return errorResponse(CHAT_ERROR_MESSAGES.invalidGuestSession, 404);
-    }
-  } else {
-    if (!requestedSessionId) {
-      return errorResponse(CHAT_ERROR_MESSAGES.sessionRequired, 400);
-    }
-
-    sessionResult = await getOwnedChatSessionById(
-      activeDbClient,
-      activeUserId,
-      requestedSessionId
-    );
-
-    if (!sessionResult.ok) {
-      return errorResponse(sessionResult.error, 404);
-    }
+  if (!requestedSessionId) {
+    return errorResponse(CHAT_ERROR_MESSAGES.sessionRequired, 400);
   }
 
-  const userRateLimitResult = isGuestRequest
-    ? await checkGuestRateLimit(
-        activeDbClient,
-        sessionResult.data.id,
-        activeUserId
-      )
-    : await checkUserRateLimit(activeDbClient, activeUserId);
+  const sessionResult = await getOwnedChatSessionById(
+    supabase,
+    activeUserId,
+    requestedSessionId
+  );
+
+  if (!sessionResult.ok) {
+    return errorResponse(sessionResult.error, 404);
+  }
+
+  const userRateLimitResult = await checkUserRateLimit(supabase, activeUserId);
 
   if (!userRateLimitResult.allowed) {
     return errorResponse(userRateLimitResult.message, 429, {
@@ -520,7 +657,7 @@ async function handleChatRequest(request: Request) {
   }
 
   if (cachedAnswerResult.ok && cachedAnswerResult.data) {
-    const userMessageResult = await saveChatMessage(activeDbClient, {
+    const userMessageResult = await saveChatMessage(supabase, {
       session_id: sessionResult.data.id,
       user_id: activeUserId,
       role: "user",
@@ -532,7 +669,7 @@ async function handleChatRequest(request: Request) {
       return errorResponse(CHAT_ERROR_MESSAGES.userMessageSaveFailed, 500);
     }
 
-    const assistantMessageResult = await saveChatMessage(activeDbClient, {
+    const assistantMessageResult = await saveChatMessage(supabase, {
       session_id: sessionResult.data.id,
       user_id: activeUserId,
       role: "assistant",
@@ -554,7 +691,7 @@ async function handleChatRequest(request: Request) {
     });
   }
 
-  const userMessageResult = await saveChatMessage(activeDbClient, {
+  const userMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
     user_id: activeUserId,
     role: "user",
@@ -566,42 +703,15 @@ async function handleChatRequest(request: Request) {
     return errorResponse(CHAT_ERROR_MESSAGES.userMessageSaveFailed, 500);
   }
 
-  const knowledgeResult = await retrieveKnowledgeForQuestion(
-    activeDbClient,
-    validatedMessage.value
-  );
-
-  if (!knowledgeResult.ok) {
-    console.warn("Knowledge retrieval failed:", knowledgeResult.error);
-  }
-
-  const collegeContext = knowledgeResult.ok ? knowledgeResult.context : "";
-  const hasVerifiedKnowledgeContext = collegeContext.trim().length > 0;
-
-  let answerContext = collegeContext;
-  let answerContextSource: AnswerContextSource = hasVerifiedKnowledgeContext
-    ? "knowledge"
-    : "ai_fallback";
-
-  if (!hasVerifiedKnowledgeContext) {
-    const webSearchResult = await retrieveWebSearchForQuestion(
-      validatedMessage.value
-    );
-
-    if (webSearchResult.ok) {
-      answerContext = webSearchResult.context;
-      answerContextSource = "web_search";
-    } else {
-      console.warn("Web search fallback unavailable:", webSearchResult.error);
-      answerContext = "";
-      answerContextSource = "ai_fallback";
-    }
-  }
+  const { answerContext, answerContextSource } = await buildAnswerContext({
+    supabase,
+    question: validatedMessage.value,
+  });
 
   const globalLlmRateLimitResult = await checkGlobalLlmRateLimit(activeUserId);
 
   if (!globalLlmRateLimitResult.allowed) {
-    const assistantMessageResult = await saveChatMessage(activeDbClient, {
+    const assistantMessageResult = await saveChatMessage(supabase, {
       session_id: sessionResult.data.id,
       user_id: activeUserId,
       role: "assistant",
@@ -623,20 +733,11 @@ async function handleChatRequest(request: Request) {
     });
   }
 
-  const prompt =
-    answerContextSource === "knowledge"
-      ? buildCollegeHelpdeskPrompt({
-          question: validatedMessage.value,
-          collegeContext: answerContext,
-        })
-      : answerContextSource === "web_search"
-        ? buildWebSearchHelpdeskPrompt({
-            question: validatedMessage.value,
-            webSearchContext: answerContext,
-          })
-        : buildGeneralAiFallbackPrompt({
-            question: validatedMessage.value,
-          });
+  const prompt = buildPromptForContext({
+    question: validatedMessage.value,
+    answerContext,
+    answerContextSource,
+  });
 
   const llmResult = await generateWithRouter({
     prompt,
@@ -658,7 +759,7 @@ async function handleChatRequest(request: Request) {
         ? `ai_fallback_${llmResult.providerUsed}`
         : llmResult.providerUsed;
 
-  const assistantMessageResult = await saveChatMessage(activeDbClient, {
+  const assistantMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
     user_id: activeUserId,
     role: "assistant",

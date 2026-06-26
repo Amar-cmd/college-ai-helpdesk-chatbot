@@ -5,7 +5,19 @@ function isEnabled(value: string | undefined) {
 function getOptionalEnv(value: string | undefined) {
   const trimmedValue = value?.trim();
 
-  return trimmedValue ? trimmedValue : null;
+  if (!trimmedValue) {
+    return null;
+  }
+
+  if (
+    trimmedValue === "null" ||
+    trimmedValue === "undefined" ||
+    trimmedValue === "00000000-0000-4000-8000-000000000001"
+  ) {
+    return null;
+  }
+
+  return trimmedValue;
 }
 
 export const AUTH_BYPASS_CONFIG = {

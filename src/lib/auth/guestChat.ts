@@ -37,7 +37,7 @@ function getAdminClientOrError() {
     return {
       ok: false as const,
       error:
-        "Supabase service role is not configured. Set SUPABASE_SERVICE_ROLE_KEY in the server environment.",
+        "Supabase admin client is not available. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
     };
   }
 
@@ -74,7 +74,7 @@ async function getProfileById(profileId: string): Promise<GuestProfileResult> {
     return {
       ok: false,
       error:
-        "Guest profile was not found for PUBLIC_CHAT_GUEST_USER_ID. Falling back to guest email setup.",
+        "Configured PUBLIC_CHAT_GUEST_USER_ID does not exist in profiles. Falling back to guest email.",
     };
   }
 
@@ -107,7 +107,7 @@ async function findAuthUserIdByEmail(
     if (error) {
       return {
         ok: false,
-        error: error.message,
+        error: `Could not list auth users. This usually means SUPABASE_SERVICE_ROLE_KEY is missing or wrong. Supabase error: ${error.message}`,
       };
     }
 
@@ -168,7 +168,7 @@ async function createGuestAuthUser(email: string): Promise<AuthUserLookupResult>
 
     return {
       ok: false,
-      error: error.message,
+      error: `Could not create guest auth user. Supabase error: ${error.message}`,
     };
   }
 
@@ -220,7 +220,7 @@ async function upsertGuestProfile({
   if (error) {
     return {
       ok: false,
-      error: error.message,
+      error: `Could not create guest profile. Supabase error: ${error.message}`,
     };
   }
 
