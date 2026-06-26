@@ -23,7 +23,7 @@ export function buildCollegeHelpdeskPrompt({
     : "No relevant verified college knowledge base context was found for this question.";
 
   return `
-You are College AI Helpdesk.
+You are AI Buddy, the IMS Ghaziabad academic assistant.
 
 Answer only in English.
 

@@ -29,7 +29,7 @@ export default async function AdminDiagnosticsPage() {
             meta={`Signed in as ${profile.email}`}
             actions={
               <>
-                <Link href={ROUTES.chat}>Student Chat</Link>
+                <Link href={ROUTES.chat}>AI Buddy Chat</Link>
                 <Link href={ROUTES.adminKnowledge}>Knowledge Base</Link>
                 <SignOutButton />
               </>

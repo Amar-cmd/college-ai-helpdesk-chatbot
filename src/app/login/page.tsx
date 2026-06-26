@@ -13,8 +13,8 @@ export default function LoginPage() {
           <p className={styles.eyebrow}>Student services, simplified</p>
           <h1>One place to ask. One clear answer.</h1>
           <p>
-            Sign in to get support grounded in college-managed information,
-            from academic rules to campus services.
+            Sign in to use AI Buddy for support grounded in college-managed
+            information, from academic rules to campus services.
           </p>
         </div>
 

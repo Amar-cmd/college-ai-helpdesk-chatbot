@@ -1,4 +1,4 @@
-# College AI Helpdesk - Deployment Checklist
+# AI Buddy - Deployment Checklist
 
 ## 1. Local final checks
 
@@ -69,7 +69,7 @@ ENABLE_GROQ=false
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=
 OPENROUTER_SITE_URL=https://your-project.vercel.app
-OPENROUTER_SITE_NAME=College AI Helpdesk
+OPENROUTER_SITE_NAME=AI Buddy
 ENABLE_OPENROUTER=false
 
 CLOUDFLARE_ACCOUNT_ID=
@@ -201,7 +201,7 @@ Expected result:
 
 ```json
 {
-  "app": "College AI Helpdesk",
+  "app": "AI Buddy",
   "status": "ready"
 }
 ```

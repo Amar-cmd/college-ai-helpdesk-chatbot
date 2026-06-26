@@ -13,7 +13,7 @@ export function ChatEmptyState({ onSelectQuestion }: ChatEmptyStateProps) {
         <BookOpenIcon size={28} />
       </div>
 
-      <h2>What can we help you understand?</h2>
+      <h2>What can AI Buddy help you with?</h2>
 
       <p>
         Ask about academics, exams, library access, the LMS, fees, or

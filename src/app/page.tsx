@@ -10,18 +10,18 @@ export default function HomePage() {
         <BrandMark />
         <div className={styles.navActions}>
           <Link href={ROUTES.chat} className={styles.textLink}>
-            Open helpdesk
+            Open AI Buddy
           </Link>
           <Link href={ROUTES.login} className={styles.primaryLink}>
-            Student login
+            Student access
           </Link>
         </div>
       </nav>
 
       <main className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Official student support</p>
-          <h1>College questions, answered clearly.</h1>
+          <p className={styles.eyebrow}>AI-powered student support</p>
+          <h1>Ask AI Buddy about college information.</h1>
           <p className={styles.heroDescription}>
             A direct line to verified information about academics, exams,
             library services, fees, placements, and campus systems.
@@ -29,10 +29,10 @@ export default function HomePage() {
 
           <div className={styles.heroActions}>
             <Link href={ROUTES.login} className={styles.heroPrimary}>
-              Start a conversation
+              Start chatting
             </Link>
             <Link href={ROUTES.chat} className={styles.heroSecondary}>
-              Preview the helpdesk
+              Preview AI Buddy
             </Link>
           </div>
 
@@ -43,10 +43,10 @@ export default function HomePage() {
           </p>
         </div>
 
-        <aside className={styles.preview} aria-label="Helpdesk preview">
+        <aside className={styles.preview} aria-label="AI Buddy preview">
           <div className={styles.previewHeader}>
             <BrandMark compact inverse />
-            <span>Student assistant</span>
+            <span>AI Buddy</span>
           </div>
           <div className={styles.previewBody}>
             <h2>What do you need help with today?</h2>

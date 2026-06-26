@@ -22,7 +22,7 @@ export function BrandMark({
       {!compact ? (
         <span className={styles.copy}>
           <strong>{APP_CONFIG.collegeName}</strong>
-          <small>Student Helpdesk</small>
+          <small>{APP_CONFIG.name}</small>
         </span>
       ) : null}
     </div>

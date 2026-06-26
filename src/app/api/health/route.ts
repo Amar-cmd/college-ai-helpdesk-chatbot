@@ -126,7 +126,7 @@ export async function GET() {
 
   return NextResponse.json(
     {
-      app: "College AI Helpdesk",
+      app: "AI Buddy",
       status,
       checks,
       note: "This health endpoint reports configuration status only. It does not expose secret values.",

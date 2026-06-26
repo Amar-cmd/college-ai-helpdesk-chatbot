@@ -62,7 +62,7 @@ export function LoginForm() {
           return;
         }
 
-        setStatusMessage("Login completed. You can now open the chat page.");
+        setStatusMessage("Login completed. You can now open AI Buddy.");
         return;
       }
 
@@ -101,12 +101,12 @@ export function LoginForm() {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <p className={styles.eyebrow}>Secure portal</p>
+        <p className={styles.eyebrow}>Secure access</p>
         <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
         <p>
           {mode === "login"
-            ? "Use your registered email to continue to the student helpdesk."
-            : "Register with your college details to access the student helpdesk."}
+            ? "Use your registered email to continue to AI Buddy."
+            : "Register with your college details to access AI Buddy."}
         </p>
       </div>
 
@@ -169,7 +169,7 @@ export function LoginForm() {
           {isSubmitting
             ? "Please wait..."
             : mode === "login"
-              ? "Sign in to helpdesk"
+              ? "Sign in to AI Buddy"
               : "Create account"}
         </button>
       </form>

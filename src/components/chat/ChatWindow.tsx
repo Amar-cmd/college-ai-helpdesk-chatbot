@@ -133,7 +133,7 @@ export function ChatWindow({
 
         <div className={styles.headerContext}>
           <span className={styles.contextLabel}>Current workspace</span>
-          <strong>Student support</strong>
+          <strong>AI Buddy</strong>
         </div>
 
         <div className={styles.headerActions}>
@@ -176,7 +176,7 @@ export function ChatWindow({
                 <span />
                 <span />
                 <span />
-                <em>Checking college information</em>
+                <em>Checking information</em>
               </div>
             ) : null}
           </div>
