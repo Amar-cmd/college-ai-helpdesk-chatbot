@@ -56,12 +56,14 @@
 import { redirect } from "next/navigation";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
-import { ensureGuestProfile, isGuestChatEnabled } from "@/lib/auth/guestChat";
+import { isGuestChatEnabled } from "@/lib/auth/guestChat";
 import { getSessionMessages } from "@/lib/db/chatMessages";
 import { getOrCreateDefaultChatSession } from "@/lib/db/chatSessions";
 import { ROUTES } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./ChatPage.module.css";
+
+export const dynamic = "force-dynamic";
 
 function ChatUnavailableCard({
   title,
@@ -90,19 +92,6 @@ export default async function ChatPage() {
   if (!currentUserResult.user || !currentUserResult.profile) {
     if (!isGuestChatEnabled()) {
       redirect(`${ROUTES.login}?redirect=${encodeURIComponent(ROUTES.chat)}`);
-    }
-
-    const guestProfileResult = await ensureGuestProfile();
-
-    if (!guestProfileResult.ok) {
-      console.warn("Guest profile setup failed:", guestProfileResult.error);
-
-      return (
-        <ChatUnavailableCard
-          title="Guest chat is temporarily unavailable"
-          description="We could not prepare guest access. Please try again later or sign in with your account."
-        />
-      );
     }
 
     return (
