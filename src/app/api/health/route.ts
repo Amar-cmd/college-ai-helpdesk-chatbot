@@ -76,6 +76,23 @@ function getProviderChecks(): HealthCheck[] {
   ];
 }
 
+function getWebSearchCheck(): HealthCheck {
+  const webSearchEnabled = isEnabled(
+    process.env.ENABLE_WEB_SEARCH_FALLBACK,
+    hasValue(process.env.BRAVE_SEARCH_API_KEY)
+  );
+
+  return {
+    name: "Web search fallback",
+    required: false,
+    status: webSearchEnabled
+      ? hasValue(process.env.BRAVE_SEARCH_API_KEY)
+        ? "ok"
+        : "missing"
+      : "disabled",
+  };
+}
+
 export async function GET() {
   const checks: HealthCheck[] = [
     checkEnv("NEXT_PUBLIC_SUPABASE_URL", true),
@@ -88,6 +105,7 @@ export async function GET() {
     checkEnv("MAX_USER_QUESTIONS_PER_HOUR", false),
     checkEnv("MAX_GLOBAL_LLM_CALLS_PER_MINUTE", false),
     ...getProviderChecks(),
+    getWebSearchCheck(),
   ];
 
   const requiredMissing = checks.some(
@@ -96,9 +114,12 @@ export async function GET() {
 
   const providerReady = checks.some(
     (check) =>
-      ["Gemini provider", "Groq provider", "OpenRouter provider", "Cloudflare provider"].includes(
-        check.name
-      ) && check.status === "ok"
+      [
+        "Gemini provider",
+        "Groq provider",
+        "OpenRouter provider",
+        "Cloudflare provider",
+      ].includes(check.name) && check.status === "ok"
   );
 
   const status = requiredMissing || !providerReady ? "not_ready" : "ready";

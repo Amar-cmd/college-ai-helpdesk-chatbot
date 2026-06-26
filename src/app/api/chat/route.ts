@@ -6,17 +6,18 @@ import {
 import { getOwnedChatSessionById } from "@/lib/db/chatSessions";
 import { saveChatMessage } from "@/lib/db/chatMessages";
 import { saveProviderAttemptLogs } from "@/lib/db/providerLogs";
-import { buildCollegeHelpdeskPrompt } from "@/lib/llm/prompt";
+import {
+  buildCollegeHelpdeskPrompt,
+  buildGeneralAiFallbackPrompt,
+  buildWebSearchHelpdeskPrompt,
+} from "@/lib/llm/prompt";
 import { generateWithRouter } from "@/lib/llm/router";
 import { retrieveKnowledgeForQuestion } from "@/lib/rag/retrieveKnowledge";
 import { checkGlobalLlmRateLimit } from "@/lib/rate-limit/globalRateLimit";
 import { checkUserRateLimit } from "@/lib/rate-limit/userRateLimit";
-import {
-  buildNoVerifiedKnowledgeAnswer,
-  shouldUseNoVerifiedKnowledgeAnswer,
-} from "@/lib/safety/collegeGuardrails";
 import { validateChatMessageInput } from "@/lib/safety/validateInput";
 import { createClient } from "@/lib/supabase/server";
+import { retrieveWebSearchForQuestion } from "@/lib/web-search/retrieveWebSearch";
 import type { AnswerSourceType } from "@/types/database";
 
 const CHAT_ERROR_MESSAGES = {
@@ -29,6 +30,8 @@ const CHAT_ERROR_MESSAGES = {
   unexpected:
     "Chat is temporarily unavailable. Please refresh the page or try again shortly.",
 };
+
+type AnswerContextSource = "knowledge" | "web_search" | "ai_fallback";
 
 function errorResponse(
   message: string,
@@ -141,6 +144,7 @@ async function handleChatRequest(request: Request) {
       assistantMessage: assistantMessageResult.data,
       provider: "cache",
       cached: true,
+      contextSource: "cache",
     });
   }
 
@@ -168,31 +172,24 @@ async function handleChatRequest(request: Request) {
   const collegeContext = knowledgeResult.ok ? knowledgeResult.context : "";
   const hasVerifiedKnowledgeContext = collegeContext.trim().length > 0;
 
-  const shouldUseSafeNoContextAnswer = shouldUseNoVerifiedKnowledgeAnswer({
-    question: validatedMessage.value,
-    hasVerifiedKnowledgeContext,
-  });
+  let answerContext = collegeContext;
+  let answerContextSource: AnswerContextSource = hasVerifiedKnowledgeContext
+    ? "knowledge"
+    : "ai_fallback";
 
-  if (shouldUseSafeNoContextAnswer) {
-    const assistantMessageResult = await saveChatMessage(supabase, {
-      session_id: sessionResult.data.id,
-      user_id: user.id,
-      role: "assistant",
-      content: buildNoVerifiedKnowledgeAnswer(),
-      provider_used: "guardrail",
-    });
+  if (!hasVerifiedKnowledgeContext) {
+    const webSearchResult = await retrieveWebSearchForQuestion(
+      validatedMessage.value
+    );
 
-    if (!assistantMessageResult.ok) {
-      return errorResponse(CHAT_ERROR_MESSAGES.assistantMessageSaveFailed, 500);
+    if (webSearchResult.ok) {
+      answerContext = webSearchResult.context;
+      answerContextSource = "web_search";
+    } else {
+      console.warn("Web search fallback unavailable:", webSearchResult.error);
+      answerContext = "";
+      answerContextSource = "ai_fallback";
     }
-
-    return NextResponse.json({
-      sessionId: sessionResult.data.id,
-      userMessage: userMessageResult.data,
-      assistantMessage: assistantMessageResult.data,
-      provider: "guardrail",
-      cached: false,
-    });
   }
 
   const globalLlmRateLimitResult = await checkGlobalLlmRateLimit(user.id);
@@ -216,13 +213,24 @@ async function handleChatRequest(request: Request) {
       assistantMessage: assistantMessageResult.data,
       provider: "rate_limit",
       cached: false,
+      contextSource: "rate_limit",
     });
   }
 
-  const prompt = buildCollegeHelpdeskPrompt({
-    question: validatedMessage.value,
-    collegeContext,
-  });
+  const prompt =
+    answerContextSource === "knowledge"
+      ? buildCollegeHelpdeskPrompt({
+          question: validatedMessage.value,
+          collegeContext: answerContext,
+        })
+      : answerContextSource === "web_search"
+        ? buildWebSearchHelpdeskPrompt({
+            question: validatedMessage.value,
+            webSearchContext: answerContext,
+          })
+        : buildGeneralAiFallbackPrompt({
+            question: validatedMessage.value,
+          });
 
   const llmResult = await generateWithRouter({
     prompt,
@@ -237,12 +245,19 @@ async function handleChatRequest(request: Request) {
     console.warn("Provider log save failed:", providerLogResult.error);
   }
 
+  const providerUsed =
+    answerContextSource === "web_search"
+      ? `web_search_${llmResult.providerUsed}`
+      : answerContextSource === "ai_fallback"
+        ? `ai_fallback_${llmResult.providerUsed}`
+        : llmResult.providerUsed;
+
   const assistantMessageResult = await saveChatMessage(supabase, {
     session_id: sessionResult.data.id,
     user_id: user.id,
     role: "assistant",
     content: llmResult.text,
-    provider_used: llmResult.providerUsed,
+    provider_used: providerUsed,
   });
 
   if (!assistantMessageResult.ok) {
@@ -250,14 +265,14 @@ async function handleChatRequest(request: Request) {
   }
 
   const sourceType: Exclude<AnswerSourceType, "cache"> =
-    hasVerifiedKnowledgeContext ? "knowledge" : "llm";
+    answerContextSource === "knowledge" ? "knowledge" : "llm";
 
-  if (llmResult.success) {
+  if (llmResult.success && answerContextSource === "knowledge") {
     const cacheSaveResult = await saveAnswerCache({
       originalQuestion: validatedMessage.value,
       answer: llmResult.text,
       sourceType,
-      providerUsed: llmResult.providerUsed,
+      providerUsed,
     });
 
     if (!cacheSaveResult.ok) {
@@ -269,8 +284,9 @@ async function handleChatRequest(request: Request) {
     sessionId: sessionResult.data.id,
     userMessage: userMessageResult.data,
     assistantMessage: assistantMessageResult.data,
-    provider: llmResult.providerUsed,
+    provider: providerUsed,
     cached: false,
+    contextSource: answerContextSource,
   });
 }
 
