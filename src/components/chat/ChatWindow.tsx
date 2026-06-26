@@ -272,9 +272,95 @@ export function ChatWindow({
     };
   }
 
-  async function handleSendMessage(content: string) {
+  // async function handleSendMessage(content: string) {
+  //   setIsLoading(true);
+  //   setErrorMessage(null);
+
+  //   try {
+  //     const response = await fetch("/api/chat", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(buildRequestBody(content)),
+  //     });
+
+  //     const result = (await response.json()) as ChatApiResponse;
+
+  //     if (!response.ok || "error" in result) {
+  //       const friendlyErrorMessage =
+  //         "error" in result
+  //           ? result.error
+  //           : "The message could not be sent. Please try again.";
+
+  //       const localUserMessage: ChatMessageItem = {
+  //         id: crypto.randomUUID(),
+  //         role: "user",
+  //         content,
+  //         createdAt: new Date().toISOString(),
+  //       };
+
+  //       const localAssistantMessage: ChatMessageItem = {
+  //         id: crypto.randomUUID(),
+  //         role: "assistant",
+  //         content: friendlyErrorMessage,
+  //         createdAt: new Date().toISOString(),
+  //       };
+
+  //       setMessages((currentMessages) => [
+  //         ...currentMessages,
+  //         localUserMessage,
+  //         localAssistantMessage,
+  //       ]);
+
+  //       setErrorMessage(null);
+  //       scrollToBottom();
+  //       return;
+  //     }
+
+  //     if (isGuestMode) {
+  //       setActiveSessionId(result.sessionId);
+  //       storeGuestSessionId(result.sessionId);
+  //     }
+
+  //     setMessages((currentMessages) => [
+  //       ...currentMessages,
+  //       result.userMessage,
+  //       result.assistantMessage,
+  //     ]);
+  //     scrollToBottom();
+  //   } catch {
+  //     const localAssistantMessage: ChatMessageItem = {
+  //       id: crypto.randomUUID(),
+  //       role: "assistant",
+  //       content: "The message could not be sent. Please try again.",
+  //       createdAt: new Date().toISOString(),
+  //     };
+
+  //     setMessages((currentMessages) => [
+  //       ...currentMessages,
+  //       localAssistantMessage,
+  //     ]);
+
+  //     setErrorMessage(null);
+  //     scrollToBottom();
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
+
+    async function handleSendMessage(content: string) {
+    const localUserMessage: ChatMessageItem = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((currentMessages) => [...currentMessages, localUserMessage]);
     setIsLoading(true);
     setErrorMessage(null);
+    scrollToBottom();
 
     try {
       const response = await fetch("/api/chat", {
@@ -293,13 +379,6 @@ export function ChatWindow({
             ? result.error
             : "The message could not be sent. Please try again.";
 
-        const localUserMessage: ChatMessageItem = {
-          id: crypto.randomUUID(),
-          role: "user",
-          content,
-          createdAt: new Date().toISOString(),
-        };
-
         const localAssistantMessage: ChatMessageItem = {
           id: crypto.randomUUID(),
           role: "assistant",
@@ -309,7 +388,6 @@ export function ChatWindow({
 
         setMessages((currentMessages) => [
           ...currentMessages,
-          localUserMessage,
           localAssistantMessage,
         ]);
 
@@ -321,13 +399,20 @@ export function ChatWindow({
       if (isGuestMode) {
         setActiveSessionId(result.sessionId);
         storeGuestSessionId(result.sessionId);
+
+        setMessages((currentMessages) => [
+          ...currentMessages,
+          result.assistantMessage,
+        ]);
+      } else {
+        setMessages((currentMessages) => [
+          ...currentMessages.map((message) =>
+            message.id === localUserMessage.id ? result.userMessage : message
+          ),
+          result.assistantMessage,
+        ]);
       }
 
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        result.userMessage,
-        result.assistantMessage,
-      ]);
       scrollToBottom();
     } catch {
       const localAssistantMessage: ChatMessageItem = {
