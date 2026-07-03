@@ -45,7 +45,7 @@ export async function retrieveKnowledgeForQuestion(
     )
     .eq("is_active", true)
     .order("updated_at", { ascending: false })
-    .limit(100);
+    .limit(300);
 
   if (error) {
     return {

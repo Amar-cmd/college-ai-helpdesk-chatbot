@@ -62,6 +62,7 @@ export function ChatInput({ isLoading, onSendMessage }: ChatInputProps) {
 
       <div className={styles.helperRow}>
         <span>Enter to send · Shift + Enter for a new line</span>
+        <span>AI responses may be inaccurate. Please verify important information.</span>
         <span
           className={
             remainingCharacters <= 80
